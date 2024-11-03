@@ -1,0 +1,36 @@
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+.Navbar {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  /* background-color: #edeba0; */
+  border-color: #ee7b30;
+  border-width: 5px;
+  border-bottom-style: solid;
+}
+
+.Navbar > * {
+  flex-grow: 1;
+  border: none;
+  font-weight: 500;
+  font-size: 20px;
+  transition-duration: 150ms;
+}
+
+.Nav-Unselected {
+  color: #ee7b30;
+  background-color: #edeba0;
+}
+
+.Nav-Unselected:hover {
+  background-color: #edd3a0;
+}
+
+.Nav-Selected {
+  color: #edeba0;
+  background-color: #ee7b30;
+}

@@ -1,0 +1,34 @@
+.Browse-Container {
+    display: grid;
+    grid-template-columns: 300px auto;
+    grid-template-rows: auto;
+    overflow: scroll;
+}
+
+.Browse-Filter-Container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: scroll;
+}
+
+.Browse-Filter-Container > div {
+    display: flex;
+    flex-direction: row;
+    margin: 20px;
+    justify-content: space-between;
+}
+
+.Browse-Filter-Container > div > p {
+    margin: 0px;
+    margin-right: 10px;
+}
+
+.Browse-Filter-Container > div > input {
+    /* width: 100%; */
+    height: 16px;
+}
+
+.Browse-Results-Container {
+    flex-grow: 1;
+}

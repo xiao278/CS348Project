@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+      "types": ["node"],
+      "target": "es2021",
+      "moduleResolution": "node",
+      // or alternatively, add "lib": ["es6", "dom", "node"]
+    }
+  }

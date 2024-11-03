@@ -1,0 +1,8 @@
+.Reader-Container {
+    display: grid;
+    grid-template-columns: 100vw;
+    grid-template-rows: 60px calc(100vh - 60px);
+    max-height: 100vh;
+    overflow-y: hidden;
+    min-width: 100%;
+}
