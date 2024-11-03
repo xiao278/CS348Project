@@ -1,6 +1,7 @@
-import { LoginPayload } from "./request_type";
+import { LoginPayload, BookQuery } from "./request_type";
 import { verify_login } from "./auth";
 import { sequelize } from "./tables";
+import { find_matching_books } from "./query_books";
 
 // test db connection
 sequelize.authenticate().then(() => {
@@ -8,7 +9,6 @@ sequelize.authenticate().then(() => {
 }).catch((error:Error) => {
     console.error('Unable to connect to the database: ', error.message);
 });
-
 
 // create application/json parser
 const bodyParser = require('body-parser');
@@ -34,7 +34,7 @@ app.listen(PORT, () => {
   
 app.post("/login", jsonParser, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type')
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
 
     try {
         let loginFields:LoginPayload = req.body;
@@ -56,3 +56,18 @@ app.post("/login", jsonParser, async (req, res) => {
     }
 });
 
+app.post("/findBook", jsonParser, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+    //TODO add login verification
+    try {
+        let filters:BookQuery = req.body;
+        let books = await find_matching_books(filters, 1);
+        console.log(books);
+        res.sendStatus(200);
+    }
+    catch (e) {
+        res.sendStatus(404);
+    }
+});

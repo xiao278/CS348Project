@@ -105,8 +105,7 @@ print(author_book_df)
 #language df
 language_df = pd.DataFrame(columns=['language'])
 language_df.rename_axis("lang_id", inplace=True)
-lang_book_df = pd.DataFrame(columns=['book_id','lang_id'])
-lang_book_df = lang_book_df.astype('int32')
+book_df['lang_id'] = None
 
 lang_set = dict()
 
@@ -119,17 +118,14 @@ for index, row in tqdm(data.loc[:,['language', 'title']].iterrows()):
         n = len(language_df)
         lang_set[language] = n + 1
         language_df.loc[n] = [language]
-    lang_book_df.loc[len(lang_book_df)] = [
-        index,
-        lang_set[language]
-    ]
+    book_df.loc[index, 'lang_id'] = lang_set[language]
     if (TESTING and index >= TEST_THRESHOLD):
         break
 
 language_df.index += 1
 
+print(book_df)
 print(language_df)
-print(lang_book_df)
 
 genre_df = pd.DataFrame(columns=['genre'])
 genre_df.rename_axis("genre_id", inplace=True)
@@ -164,9 +160,9 @@ L_PATH = os.path.join(write_dir, "Languages.csv")
 A_PATH = os.path.join(write_dir, "Authors.csv")
 WB_PATH = os.path.join(write_dir, "Written_By.csv")
 BG_PATH = os.path.join(write_dir, "Book_Genre.csv")
-BL_PATH = os.path.join(write_dir, "Book_Lang.csv")
+# BL_PATH = os.path.join(write_dir, "Book_Lang.csv")
 
-filepaths = [B_PATH,G_PATH,L_PATH,A_PATH,WB_PATH,BG_PATH,BL_PATH]
+filepaths = [B_PATH,G_PATH,L_PATH,A_PATH,WB_PATH,BG_PATH]
 
 for filepath in filepaths:
     if os.path.isfile(filepath):
@@ -177,5 +173,4 @@ genre_df.to_csv(G_PATH)
 language_df.to_csv(L_PATH)
 author_df.to_csv(A_PATH)
 author_book_df.to_csv(WB_PATH, index=False)
-lang_book_df.to_csv(BL_PATH, index=False)
 book_genre_df.to_csv(BG_PATH, index=False)

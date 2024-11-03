@@ -2,11 +2,11 @@ import React, {useState} from 'react';
 import "./ReaderPage.css";
 import Browse from './reader-content/BrowseBook.tsx';
 
-function ReaderPage(setPage) {
+function ReaderPage({credentials, setPage}) {
     const [tab, setTab] = useState('browse');
 
     function renderContent() {
-        if (tab === 'browse') return <Browse />;
+        if (tab === 'browse') return <Browse credentials={credentials} />;
     }
 
     return (
@@ -16,6 +16,7 @@ function ReaderPage(setPage) {
                     <button onClick={() => setTab('borrow')} className={(tab === 'borrow') ? "Nav-Selected" : "Nav-Unselected"}>Borrowed books</button>
                     <button onClick={() => setTab('wishlist')} className={(tab === 'wishlist') ? "Nav-Selected" : "Nav-Unselected"}>Wishlist</button>
                     <button onClick={() => setTab('issues')} className={(tab === 'issues') ? "Nav-Selected" : "Nav-Unselected"}>Issues</button>
+                    <button onClick={() => setTab('account')} className={(tab === 'account') ? "Nav-Selected" : "Nav-Unselected"}>Account</button>
                 </div>
                 {renderContent()}
             </div>

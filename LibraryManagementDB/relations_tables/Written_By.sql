@@ -10719,7 +10719,6 @@ VALUES
 	(8126, 1514, 'Translator'),
 	(8127, 278, 'Goodreads Author'),
 	(8128, 1424, 'Author'),
-	(8128, 1424, 'Author'),
 	(8129, 5323, 'Author'),
 	(8130, 190, 'Goodreads Author'),
 	(8130, 5005, 'Illustrator'),

@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS Staffs;
 
 strong_entities = {'Books', 'Publishers', 'Authors', 'Readers', 'Logins', 'Staffs', 'Genres', 'Languages'}
 weak_entities = {'Copies'}
-relations = {'Wishist', 'Reader_Login', 'Staff_Login', 'Report', 'Borrow', 'Published_By', 'Written_By', 'Book_Genre', 'Book_Lang'}
+relations = {'Wishist', 'Reader_Login', 'Staff_Login', 'Report', 'Borrow', 'Published_By', 'Written_By', 'Book_Genre'}
 
 READ_DIR:str = os.path.dirname(__file__) + "/data_csv"
 S_WRITE_DIR:str = os.path.realpath(os.path.join(os.path.dirname(__file__), "../strong_entities_tables"))
@@ -74,6 +74,10 @@ def load_dataset(filename:str) -> bool:
         for i in range(len(columns)):
             column:str = columns[i].strip("\"").strip().replace('\'', '\'\'')
             isnumeric:bool = column.isnumeric()
+            if column == "":
+                column = "NULL"
+                isnumeric = True
+            
             if not isnumeric:
                 columns_formatted += "'"
             columns_formatted += column

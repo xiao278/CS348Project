@@ -1,6 +1,5 @@
 -- relations
 DROP TABLE IF EXISTS Book_Genre;
-DROP TABLE IF EXISTS Book_Lang;
 DROP TABLE IF EXISTS Wishlist;
 DROP TABLE IF EXISTS Reader_Login;
 DROP TABLE IF EXISTS Staff_Login;
@@ -22,14 +21,16 @@ DROP TABLE IF EXISTS Readers;
 DROP TABLE IF EXISTS Logins;
 DROP TABLE IF EXISTS Staffs;
 
-CREATE TABLE Books (
-    book_id INT AUTO_INCREMENT PRIMARY KEY,
-    title NVARCHAR(256)
-);
-
 CREATE TABLE Languages (
     lang_id INT AUTO_INCREMENT PRIMARY KEY,
     language VARCHAR(35)
+);
+
+CREATE TABLE Books (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title NVARCHAR(256),
+    lang_id INT NULL,
+    FOREIGN KEY (lang_id) REFERENCES Languages(lang_id)
 );
 
 CREATE TABLE Genres (
@@ -136,13 +137,6 @@ CREATE TABLE Wishlist (
     book_id INT,
     FOREIGN KEY (book_id) REFERENCES Books(book_id),
     PRIMARY KEY (reader_id, book_id)
-);
-
-CREATE TABLE Book_Lang (
-    book_id INT,
-    FOREIGN KEY (book_id) REFERENCES Books(book_id),
-    lang_id INT,
-    FOREIGN KEY (lang_id) REFERENCES Languages(lang_id)
 );
 
 CREATE TABLE Book_Genre (

@@ -2,7 +2,9 @@
     display: grid;
     grid-template-columns: 300px auto;
     grid-template-rows: auto;
-    overflow: scroll;
+    /* height: 0;
+    min-height: 100%; */
+    overflow: hidden;
 }
 
 .Browse-Filter-Container {
@@ -10,6 +12,7 @@
     flex-direction: column;
     align-items: stretch;
     overflow: scroll;
+    border-right-style: solid;
 }
 
 .Browse-Filter-Container > div {
@@ -30,5 +33,61 @@
 }
 
 .Browse-Results-Container {
+    grid-template-columns: auto;
+    grid-template-rows: auto, auto;
+    height: 0;
+    min-height: 100%;
+    overflow: auto;
+}
+
+.Book-Card-Container {
+    display: grid;
+    grid-template-columns: auto 120px;
+    grid-template-rows: 100%;
+    border-style: solid;
+    border-width: 1px;
+    /* border-color: #ee7b30; */
+    flex-grow: 0;
+    margin: 10px;
+    padding: 10px;
+    background-color: #eeeeff;
+}
+
+.Book-Card-Container > .Buttons-Container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.Book-Card-Container > .Info-Container {
+    display: flex;
+    flex-direction: column;
+}
+
+.Info-Container > div {
+    overflow: hidden;
+    text-wrap: nowrap;
+    box-sizing: border-box;
+    width: 0;
+    min-width: 100%;
+    text-overflow: ellipsis;
+}
+
+.Buttons-Container > button {
     flex-grow: 1;
+    border-radius: 0;
+    border-style: solid;
+    border-width: 1px;
+    margin: 5px;
+    /* background-color: #edeba0; */
+}
+
+.Result-Page-Nav {
+    border-bottom: 1px solid;
+}
+
+.Result-Page-Container {
+    height: 0;
+    min-height: 100%;
+    overflow: scroll;
 }

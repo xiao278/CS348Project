@@ -41,16 +41,16 @@ Readers.init(
             autoIncrement: true,
         },
         phone_num: {
-            type: DataTypes.CHAR(15),
+            type: DataTypes.STRING(15),
         },
         address: {
-            type: DataTypes.CHAR(100),
+            type: DataTypes.STRING(100),
         },
         email: {
-            type: DataTypes.CHAR(254),
+            type: DataTypes.STRING(254),
         },
         name: {
-            type: DataTypes.CHAR(50),
+            type: DataTypes.STRING(50),
         }
     },
     {
@@ -69,7 +69,7 @@ Staffs.init(
             autoIncrement: true,
         },
         name: {
-            type: DataTypes.CHAR(50),
+            type: DataTypes.STRING(50),
         }
     },
     {
@@ -90,7 +90,7 @@ Staff_Login.init(
             }
         },
         username: {
-            type: DataTypes.CHAR(32),
+            type: DataTypes.STRING(32),
             references: {
                 model: Logins,
                 key: 'username'
@@ -105,6 +105,7 @@ Staff_Login.init(
 )
 
 
+
 class Reader_Login extends Model {}
 Reader_Login.init(
     {
@@ -116,7 +117,7 @@ Reader_Login.init(
             }
         },
         username: {
-            type: DataTypes.CHAR(32),
+            type: DataTypes.STRING(32),
             references: {
                 model: Logins,
                 key: 'username'
@@ -130,4 +131,172 @@ Reader_Login.init(
     }
 )
 
-export {sequelize, Logins, Readers, Staffs, Reader_Login, Staff_Login}
+
+class Books extends Model {}
+Books.init(
+    {
+        book_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        title: {
+            type: DataTypes.STRING(256),
+        }
+    },
+    {
+        sequelize,
+        modelName: 'Books'
+    }
+);
+
+
+class Authors extends Model{}
+Authors.init(
+    {
+        author_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        name: {
+            type: DataTypes.STRING(50),
+        }
+    },
+    {
+        sequelize,
+        modelName: "Authors"
+    }
+);
+
+
+class Genres extends Model{}
+Genres.init(
+    {
+        genre_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        genre: {
+            type: DataTypes.STRING(30)
+        }
+    },
+    {
+        sequelize,
+        modelName: "Genres"
+    }
+);
+
+
+class Languages extends Model{}
+Languages.init(
+    {
+        lang_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        language: {
+            type: DataTypes.STRING(35)
+        }
+    },
+    {
+        sequelize,
+        modelName: "Languages"
+    }
+);
+
+
+class Written_By extends Model{}
+Written_By.init(
+    {
+        author_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Authors,
+                key: "author_id"
+            }
+        },
+        book_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Books,
+                key: "book_id"
+            }
+        },
+        role: {
+            type: DataTypes.STRING(30)
+        }
+    },
+    {
+        sequelize,
+        modelName: "Written_By",
+        tableName: "Written_By"
+    }
+);
+Books.belongsToMany(Authors, {through: Written_By, foreignKey: "book_id"});
+Authors.belongsToMany(Books, {through: Written_By, foreignKey: "author_id"});
+
+
+class Book_Genre extends Model{}
+Book_Genre.init(
+    {
+        book_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Books,
+                key: "book_id"
+            }
+        },
+        genre_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Genres,
+                key: "genre_id"
+            }
+        }
+    },
+    {
+        sequelize,
+        modelName: "Book_Genre",
+        tableName: "Book_Genre"
+    }
+);
+Books.belongsToMany(Genres, {through: Book_Genre, foreignKey: "book_id"});
+Genres.belongsToMany(Books, {through: Book_Genre, foreignKey: "genre_id"});
+
+
+class Book_Lang extends Model{}
+Book_Lang.init(
+    {
+        book_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Books,
+                key: "book_id"
+            }
+        },
+        lang_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Languages,
+                key: "lang_id"
+            }
+        }
+    },
+    {
+        sequelize,
+        modelName: "Book_Lang",
+        tableName: "Book_Lang"
+    }
+);
+
+
+export {sequelize, 
+    Logins, Readers, Staffs, Reader_Login, Staff_Login,
+    Books,
+    Languages, Book_Lang,
+    Genres, Book_Genre,
+    Authors, Written_By
+}

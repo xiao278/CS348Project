@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 
 import "./Login.css"
 
+interface Credentials {
+    username: string;
+    password: string;
+}
+
 function Login({setPage, setCredentials}) {
 
     const [username, setUsername] = useState("");
@@ -29,6 +34,7 @@ function Login({setPage, setCredentials}) {
         let result = await fetchLogin(username, password);
         if (result.role === "reader" || result.role === "staff") {
             setCredentials({username: username, password: password});
+            // console.log(username, password)
             // TODO create staff page
             setPage("reader");
         }

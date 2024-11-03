@@ -9,6 +9,19 @@ interface LoginPayload {
     password: string;
 }
 
-export {LoginPayload};
+interface BookGenre {
+    id: number; //LIKE "%"
+    include: boolean;
+}
+
+interface BookQuery {
+    title: string; //LIKE "%title%"
+    publisher: string; //LIKE "%pub%"
+    language_id: number; //LIKE "lang" (direct match)
+    author: string; //LIKE "%author%" 
+    genres: BookGenre[]; 
+}
+
+export {LoginPayload, BookQuery};
 
 
