@@ -1,3 +1,7 @@
+:root {
+    --nav_bar_height: 50px;
+}
+
 .Browse-Container {
     display: grid;
     grid-template-columns: 300px auto;
@@ -32,14 +36,6 @@
     height: 16px;
 }
 
-.Browse-Results-Container {
-    grid-template-columns: auto;
-    grid-template-rows: auto, auto;
-    height: 0;
-    min-height: 100%;
-    overflow: auto;
-}
-
 .Book-Card-Container {
     display: grid;
     grid-template-columns: auto 120px;
@@ -51,6 +47,7 @@
     margin: 10px;
     padding: 10px;
     background-color: #eeeeff;
+    /* box-shadow:  0px 10px 17px -7px rgba(0,0,0,0.75); */
 }
 
 .Book-Card-Container > .Buttons-Container {
@@ -82,12 +79,42 @@
     /* background-color: #edeba0; */
 }
 
+.Browse-Results-Container {
+    grid-template-columns: auto;
+    grid-template-rows: auto, auto;
+    /* height: 0;
+    min-height: 100%; */
+    overflow: auto;
+}
+
 .Result-Page-Nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
     border-bottom: 1px solid;
+    column-gap: 10px;
+    overflow: hidden;
+}
+
+.Page-Display {
+    flex-shrink: 0;
+}
+
+.Result-Page-Bar {
+    display: grid;
+    flex-grow: 0;
+    height: var(--nav_bar_height);
+    grid-template-columns: auto;
+    grid-template-rows: auto auto;
+}
+
+.Result-Page-Stats {
+    text-align: center;
 }
 
 .Result-Page-Container {
     height: 0;
-    min-height: 100%;
+    min-height: calc(100% - var(--nav_bar_height));
     overflow: scroll;
 }

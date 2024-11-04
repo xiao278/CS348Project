@@ -8,7 +8,7 @@ interface BookData extends Object {
     title: string;
     Publisher: any;
     Language: any;
-    Authors: any;
+    Authors: {name: string}[];
     Genres: any[];
 }
 
@@ -25,10 +25,9 @@ interface BrowseProps {
 
 function BookCard(props: BookCardProps) {
     const data = props.data
-    console.log(data.Authors.length)
     const setDataCardInfo = props.setDataCardInfo
 
-    const extractAuthorNames = (list) => {
+    const extractAuthorNames = (list: BookData['Authors']) => {
         let names:string[] = [];
         list.map((item) => names.push(item.name));
         return names.toString();
@@ -52,15 +51,22 @@ function BookCard(props: BookCardProps) {
 }
 
 function Browse(props: BrowseProps) {
+    const page_items = 15;
     const tables = props.tables;
     const setTables = props.setTables;
+
     const [ books, setBooks ] = useState<BookData[]>([]);
     const [ lang, setLang ] = useState("");
     const [ title, setTitle ] = useState("");
     const [ author, setAuthor ] = useState("");
     const [ publisher, setPublisher ] = useState("");
+    
+    const [ curFilters, setCurFilters ] = useState<BookQuery | null>(null)
+    const [ curPage, setCurPage ] = useState(1)
+    const [ queryStats, setQueryStats ] = useState<any>({num_books: 0, num_pages: 0})
 
-    async function fetchBookData(filters) {
+    async function fetchBookData(page) {
+        // match lang text with id, not the best way
         let lang_id = 0;
         if (tables != null) {
             for (let i:number = 0; i < tables.languages.length; i++) {
@@ -79,13 +85,44 @@ function Browse(props: BrowseProps) {
             language_id: lang_id,
             genres: []
         }
-        let response = await fetch("http://localhost:8080/findBook",
+        
+        const findBookReq = {
+            query: query,
+            page: page
+        }
+
+        //fetch pages
+        if (curFilters === null || JSON.stringify(curFilters) != JSON.stringify(query)){
+            console.log("fetching new query stats")
+            setCurPage(1)
+            setQueryStats({num_books: 0, num_pages: 0})
+            let response = await fetch("http://localhost:8080/countBooks",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(query)
+                }
+            ).then(res => {
+                if (res.ok) {
+                    return res.json();
+                }
+            });
+            if (response != null) {
+                setQueryStats(response)
+                // console.log(response);
+            }
+        }
+
+        console.log(findBookReq)
+        let response = await fetch("http://localhost:8080/findBooks",
             {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(query)
+                body: JSON.stringify(findBookReq)
             }
         )
         .then(response => {
@@ -94,8 +131,9 @@ function Browse(props: BrowseProps) {
             }
         });
         if (response != null) {
-            setBooks(response)
-            console.log(response)
+            setBooks(response);
+            setCurFilters(query);
+            // console.log(response);
         }
     }
 
@@ -120,7 +158,7 @@ function Browse(props: BrowseProps) {
             }
         }
         mog();
-    })
+    });
 
     function populateLangList() {
         if (tables === null) {
@@ -132,6 +170,14 @@ function Browse(props: BrowseProps) {
             ))
         }
     }
+
+    function calc_books_displayed() {
+        let lowerBound = Math.min((curPage - 1) * page_items + 1, queryStats.num_books)
+        let upperBound = Math.min((curPage) * page_items, queryStats.num_books)
+        return `${lowerBound}-${upperBound}`;
+    }
+
+
 
     return (
         <div className='Browse-Container'>
@@ -156,11 +202,25 @@ function Browse(props: BrowseProps) {
                     <input type="text"></input>
                 </div>
                 <div>
-                    <button onClick={fetchBookData}> Apply Filters </button>
+                    <button onClick={() => {setCurPage(1); fetchBookData(1)}} className='Common-Button'> Apply Filters </button>
                 </div>
             </div>
             <div className='Browse-Result-Container'>
-                <div className='Result-Page-Nav'>page 1 of 3</div>
+                <div className='Result-Page-Bar'>
+                    <div className='Result-Page-Stats'>
+                        Book(s) Found: {queryStats.num_books}. Displaying results {calc_books_displayed()}
+                    </div>
+                    <div className='Result-Page-Nav'>
+                        
+                        {curPage > 1 ? <button className='Common-Button' onClick={() => {fetchBookData(1); setCurPage(1);}}>First</button> : <button className='No-Button'>First</button>}
+                        {curPage > 1 ? <button className='Common-Button' onClick={() => {fetchBookData(curPage - 1); setCurPage(curPage - 1);}}>Prev</button> : <button className='No-Button'>Prev</button>}
+                        <div className='Page-Display'>Page {curPage} of {
+                            queryStats === null ? 1 : queryStats.num_pages
+                        }</div>
+                        {curPage < queryStats.num_pages ? <button className='Common-Button' onClick={() => {fetchBookData(curPage + 1); setCurPage(curPage + 1)}}>Next</button> : <button className='No-Button'>Next</button>}
+                        {curPage < queryStats.num_pages ? <button className='Common-Button' onClick={() => {fetchBookData(queryStats.num_pages); setCurPage(queryStats.num_pages)}}>Last</button> : <button className='No-Button'>Last</button>}
+                    </div>
+                </div>
                 <div className='Result-Page-Container'>
                     {books.map((item) => (
                         <BookCard key={item.book_id} data={item} setDataCardInfo={null} />

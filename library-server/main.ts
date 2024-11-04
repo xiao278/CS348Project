@@ -1,7 +1,7 @@
 import { LoginPayload, BookQuery } from "./request_type";
 import { verify_login } from "./auth";
 import { sequelize } from "./tables";
-import { find_matching_books, send_tables } from "./query_books";
+import { count_matching_books, find_matching_books, send_tables } from "./query_books";
 
 // test db connection
 sequelize.authenticate().then(() => {
@@ -62,19 +62,39 @@ app.get("/fetchBrowseTables", async (req, res) => {
     // console.log(JSON.stringify(tables))
 })
 
-app.post("/findBook", jsonParser, async (req, res) => {
+app.post("/findBooks", jsonParser, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+    //TODO add login verification
+    try {
+        const filters = req.body.query;
+        const page = req.body.page;
+        // console.log(filters);
+        let books = await find_matching_books(filters, page);
+        res.status(200).send(books);
+    }
+    catch (e) {
+        console.log("reqbody: ")
+        console.log(req.body)
+        console.log(e)
+        res.status(404).send({message: e.message});
+    }
+});
+
+app.post("/countBooks", jsonParser, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
 
     //TODO add login verification
     try {
         let filters:BookQuery = req.body;
-        console.log(filters);
-        let books = await find_matching_books(filters, 1);
-        res.status(200).send(books);
+        let counts = await count_matching_books(filters);
+        res.status(200).send(counts);
     }
     catch (e) {
         console.log(e)
         res.status(404).send({message: e.message});
     }
-});
+})
+

@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import "./Login.css"
-
-interface Credentials {
-    username: string;
-    password: string;
-}
+import "./Login.css";
 
 function Login({setPage, setCredentials}) {
 

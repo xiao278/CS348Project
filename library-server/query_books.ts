@@ -1,49 +1,15 @@
-import { Includeable, Op, Options, WhereOptions } from "sequelize";
+import { col, fn, Includeable, Op, Options, WhereOptions } from "sequelize";
 import { Books, Book_Genre, Written_By, Authors, Genres, Languages } from "./tables";
 import { BookQuery } from "./request_type";
 
-/*
-async function verify_login(usr:string, pwd:string) {
-    let result = await Logins.findAll({
-        attributes: ['username'],
-        where: {
-            username: usr,
-            password: pwd
-        }
-    });
-    if (result.length > 0) {
-        let username:string = result[0].dataValues.username;
-        let result_staff = await Staff_Login.findAll({
-            attributes: ['staff_id'],
-            where: {
-                username: username
-            }
-        });
-        if (result_staff.length > 0) {
-            return "staff";
-        };
-        let result_reader = await Reader_Login.findAll({
-            attributes: ['reader_id'],
-            where: {
-                username: username
-            }
-        });
-        if (result_reader.length > 0) {
-            return "reader";
-        }
-        else {
-            return "user has no role";
-        }
-    }
-    else return null;
+const page_items = 15;
+
+interface QueryStats {
+    num_books: number;
+    num_pages: number;
 }
-*/
 
-
-//TODO include role
-async function find_matching_books(filters: BookQuery, page: number) {
-    const page_items = 15;
-
+function build_query_base(filters:BookQuery, isCounting:boolean) {
     let title_match:WhereOptions = {}
     if (filters.title.length > 0) {
         title_match = {
@@ -71,7 +37,6 @@ async function find_matching_books(filters: BookQuery, page: number) {
         }
     }
 
-
     // let does_match_genre:boolean = filters.genres.length > 0
     // let genre_match:WhereOptions = {}
     // if (does_match_genre) {
@@ -90,13 +55,12 @@ async function find_matching_books(filters: BookQuery, page: number) {
     //     }
     // }
 
-    
-    let matching_books = await Books.findAll({
+    let partial_query = {
         include: [
             {
                 model: Authors,
                 required: does_match_author,
-                attributes: ['name'],
+                attributes: isCounting ? [] : ['name'],
                 through: {
                     attributes:[]
                 },
@@ -105,20 +69,44 @@ async function find_matching_books(filters: BookQuery, page: number) {
             {
                 model: Languages,
                 required: does_match_lang,
-                attributes: ['language'],
+                attributes: isCounting ? [] : ['language'],
                 where: lang_match,
             }
         ],
         where: title_match,
-        attributes: ['book_id', 'title'],
+        attributes: isCounting ? [] : ['book_id', 'title'],
+    }
+    return partial_query
+}
+
+//TODO include role
+async function find_matching_books(filters: BookQuery, page: number) {
+    let partial_query = build_query_base(filters, false)
+
+    let full_query = Object.assign({}, partial_query, {
         logging: false,
         limit: page_items,
         offset: (page - 1) * page_items
-    }).then((query) => query.map((tuple) => tuple.toJSON()));
+    });
+    
+    let matching_books = await Books.findAll(full_query).then((query) => query.map((tuple) => tuple.toJSON()));
 
     return matching_books;
 }
 
+async function count_matching_books(filters) {
+    let partial_query = build_query_base(filters, true)
+    let full_query = Object.assign({}, partial_query, {
+        logging: false,
+        distinct: true,
+        col: 'book_id'
+    });
+
+    let book_count = await Books.count(full_query);
+    let pages_count = Math.ceil(book_count / page_items)
+    let result_obj:QueryStats = { num_books: book_count, num_pages: pages_count }
+    return result_obj;
+}
 
 async function send_tables() {
     let langs = await Languages.findAll({
@@ -130,4 +118,4 @@ async function send_tables() {
     return {languages: langs, genres: genres}
 }
 
-export{ find_matching_books, send_tables }
+export{ find_matching_books, send_tables, count_matching_books }
