@@ -1,5 +1,5 @@
 import { Includeable, Op, Options, WhereOptions } from "sequelize";
-import {Books, Book_Lang, Book_Genre, Written_By, Authors, Genres, Languages} from "./tables";
+import { Books, Book_Genre, Written_By, Authors, Genres, Languages } from "./tables";
 import { BookQuery } from "./request_type";
 
 /*
@@ -70,6 +70,26 @@ async function find_matching_books(filters: BookQuery, page: number) {
             "lang_id": filters.language_id
         }
     }
+
+
+    // let does_match_genre:boolean = filters.genres.length > 0
+    // let genre_match:WhereOptions = {}
+    // if (does_match_genre) {
+    //     let include_list:number[] = []
+    //     let exclude_list:number[] = []
+    //     filters.genres.forEach((item) => {
+    //         if (item.include) {
+    //             include_list.push(item.id)
+    //         }
+    //         else {
+    //             exclude_list.push(item.id)
+    //         }
+    //     });
+    //     genre_match = {
+            
+    //     }
+    // }
+
     
     let matching_books = await Books.findAll({
         include: [
@@ -86,18 +106,28 @@ async function find_matching_books(filters: BookQuery, page: number) {
                 model: Languages,
                 required: does_match_lang,
                 attributes: ['language'],
-                through: {
-                    attributes:[]
-                },
-                where: lang_match
+                where: lang_match,
             }
         ],
         where: title_match,
         attributes: ['book_id', 'title'],
-        logging: true
+        logging: false,
+        limit: page_items,
+        offset: (page - 1) * page_items
     }).then((query) => query.map((tuple) => tuple.toJSON()));
 
     return matching_books;
 }
 
-export{ find_matching_books }
+
+async function send_tables() {
+    let langs = await Languages.findAll({
+        attributes: ['lang_id', 'language']
+    }).then((query) => query.map((tuple) => tuple.toJSON()));
+    let genres = await Genres.findAll({
+        attributes: ['genre_id', 'genre']
+    }).then((query) => query.map((tuple) => tuple.toJSON()));
+    return {languages: langs, genres: genres}
+}
+
+export{ find_matching_books, send_tables }

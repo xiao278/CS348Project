@@ -2,11 +2,11 @@ import React, {useState} from 'react';
 import "./ReaderPage.css";
 import Browse from './reader-content/BrowseBook.tsx';
 
-function ReaderPage({credentials, setPage}) {
+function ReaderPage({credentials, setPage, tables, setTables}) {
     const [tab, setTab] = useState('browse');
 
     function renderContent() {
-        if (tab === 'browse') return <Browse credentials={credentials} />;
+        if (tab === 'browse') return <Browse credentials={credentials} setTables={setTables} tables={tables} />;
     }
 
     return (

@@ -1,7 +1,7 @@
 import { LoginPayload, BookQuery } from "./request_type";
 import { verify_login } from "./auth";
 import { sequelize } from "./tables";
-import { find_matching_books } from "./query_books";
+import { find_matching_books, send_tables } from "./query_books";
 
 // test db connection
 sequelize.authenticate().then(() => {
@@ -56,6 +56,12 @@ app.post("/login", jsonParser, async (req, res) => {
     }
 });
 
+app.get("/fetchBrowseTables", async (req, res) => {
+    let tables = await send_tables();
+    res.status(200).send(JSON.stringify(tables));
+    // console.log(JSON.stringify(tables))
+})
+
 app.post("/findBook", jsonParser, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
@@ -63,11 +69,12 @@ app.post("/findBook", jsonParser, async (req, res) => {
     //TODO add login verification
     try {
         let filters:BookQuery = req.body;
+        console.log(filters);
         let books = await find_matching_books(filters, 1);
-        console.log(books);
-        res.sendStatus(200);
+        res.status(200).send(books);
     }
     catch (e) {
-        res.sendStatus(404);
+        console.log(e)
+        res.status(404).send({message: e.message});
     }
 });

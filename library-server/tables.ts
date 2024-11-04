@@ -132,6 +132,25 @@ Reader_Login.init(
 )
 
 
+class Languages extends Model{}
+Languages.init(
+    {
+        lang_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        language: {
+            type: DataTypes.STRING(35)
+        }
+    },
+    {
+        sequelize,
+        modelName: "Languages"
+    }
+);
+
+
 class Books extends Model {}
 Books.init(
     {
@@ -142,6 +161,14 @@ Books.init(
         },
         title: {
             type: DataTypes.STRING(256),
+        },
+        lang_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Languages,
+                key: "lang_id"
+            },
+            allowNull: true
         }
     },
     {
@@ -189,25 +216,6 @@ Genres.init(
 );
 
 
-class Languages extends Model{}
-Languages.init(
-    {
-        lang_id: {
-            type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
-        },
-        language: {
-            type: DataTypes.STRING(35)
-        }
-    },
-    {
-        sequelize,
-        modelName: "Languages"
-    }
-);
-
-
 class Written_By extends Model{}
 Written_By.init(
     {
@@ -235,8 +243,6 @@ Written_By.init(
         tableName: "Written_By"
     }
 );
-Books.belongsToMany(Authors, {through: Written_By, foreignKey: "book_id"});
-Authors.belongsToMany(Books, {through: Written_By, foreignKey: "author_id"});
 
 
 class Book_Genre extends Model{}
@@ -263,40 +269,19 @@ Book_Genre.init(
         tableName: "Book_Genre"
     }
 );
+
+Books.belongsToMany(Authors, {through: Written_By, foreignKey: "book_id"});
+Authors.belongsToMany(Books, {through: Written_By, foreignKey: "author_id"});
+
 Books.belongsToMany(Genres, {through: Book_Genre, foreignKey: "book_id"});
 Genres.belongsToMany(Books, {through: Book_Genre, foreignKey: "genre_id"});
 
-
-class Book_Lang extends Model{}
-Book_Lang.init(
-    {
-        book_id: {
-            type: DataTypes.INTEGER,
-            references: {
-                model: Books,
-                key: "book_id"
-            }
-        },
-        lang_id: {
-            type: DataTypes.INTEGER,
-            references: {
-                model: Languages,
-                key: "lang_id"
-            }
-        }
-    },
-    {
-        sequelize,
-        modelName: "Book_Lang",
-        tableName: "Book_Lang"
-    }
-);
-
+Languages.hasMany(Books, {foreignKey: "lang_id"});
+Books.belongsTo(Languages, {foreignKey: "lang_id"})
 
 export {sequelize, 
     Logins, Readers, Staffs, Reader_Login, Staff_Login,
-    Books,
-    Languages, Book_Lang,
+    Books, Languages,
     Genres, Book_Genre,
     Authors, Written_By
 }
