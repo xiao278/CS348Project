@@ -7,8 +7,8 @@ import numpy as np
 from ast import literal_eval
 
 
-TESTING = True
-TEST_THRESHOLD = 10000
+TESTING = False
+TEST_THRESHOLD = 1000
 
 # CREATE TABLE Books (
 #     isbn CHAR(13) PRIMARY KEY,
@@ -33,34 +33,35 @@ data.index += 1
 #    'ratingsByStars', 'likedPercent', 'setting', 'bbeScore', 'bbeVotes',
 #    'price'
 
+badName = "bad name"
+
 def extract_role(author:str):
     author = author.strip()
+    if author == "more…":
+        raise Exception("bad name")
+
     role = re.findall(r"\((.*?)\)", author)
 
     if len(role) == 0:
         author_name = author
         role = ["Author"]
     else:
-        author_name = re.match(r"(?:([^\(\)]+))\s?(?:\(.*)?", author).group(1).strip()
+        author_name_match = re.match(r"(?:([^\(\)]+))\s?(?:\(.*)?", author)
+        # if (author_name_match is None):
+        #     print(author)
+        #     exit()
+        author_name = author_name_match.group(1).strip()
 
     # print(author_name)
     # print(role)
     return (author_name, role)
-
-# extract_role(" Mary GrandPré (Illustrator)")
-
-# for author_list_str in data['author']:
-#     author_list = author_list_str.split(",")
-#     for author in author_list:
-#         author_name, role = extract_role(author)
-#         print("(%s, %s)" % (author_name, role))
 
 
 #notes: 
 #   - price can be null
 #   - author is a list
 #   - genre is a parsable list
-#   - assume one publisher per book
+#   - assume one publisher per book, so if there is multiple just take one
 #   - ignore setting and characters
 #   - ISBN is fucked
 #   - mysql db is 1-indexed
@@ -69,7 +70,10 @@ def extract_role(author:str):
 #   - title
 
 # book df
-book_df = data.loc[0: (TEST_THRESHOLD if TESTING else len(data)),['title']]
+book_df = data.loc[0: (TEST_THRESHOLD if TESTING else len(data)),['title', 'publishDate']]
+book_df.rename(columns={"publishDate": "publish_date"}, inplace=True)
+book_df['publish_date'] = pd.to_datetime(book_df['publish_date'], errors='coerce')
+
 
 print(book_df)
 
@@ -83,7 +87,15 @@ author_set = dict()
 for index, row in tqdm(data.loc[:,['author', 'title']].iterrows()):
     author_list = row['author'].split(",")
     for author in author_list:
-        name, roles = extract_role(author)
+        try:
+            name, roles = extract_role(author)
+        except Exception as e:
+            if e == badName:
+                continue
+        except:
+            print(row['title'])
+            print(row['author'])
+            exit()
         if name not in author_set:
             n = len(author_df)
             author_set[name] = n + 1
@@ -153,6 +165,32 @@ genre_df.index += 1
 print(genre_df)
 print(book_genre_df)
 
+publisher_df = pd.DataFrame(columns=['name'])
+publisher_df.rename_axis("publisher_id", inplace=True)
+book_df['publisher_id'] = None
+
+pub_set = dict()
+
+for index, row in tqdm(data.loc[:,['publisher', 'title']].iterrows()):
+    publisher:str | float = row['publisher']
+    title = row['title']
+    if publisher is np.nan:
+        continue
+    publisher = publisher.split(",")[0]
+    if publisher not in pub_set:
+        n = len(publisher_df)
+        # mysql autoincrement id starts at 1, so 1 indexed
+        pub_set[publisher] = n + 1
+        publisher_df.loc[n] = [publisher]
+    book_df.loc[index, 'publisher_id'] = pub_set[publisher]
+    if (TESTING and index >= TEST_THRESHOLD):
+        break
+
+publisher_df.index += 1
+
+print(publisher_df)
+print(book_df)
+
 write_dir = os.path.realpath(os.path.join(cur_dur, "../data_csv"))
 B_PATH = os.path.join(write_dir, "Books.csv")
 G_PATH = os.path.join(write_dir, "Genres.csv")
@@ -160,15 +198,17 @@ L_PATH = os.path.join(write_dir, "Languages.csv")
 A_PATH = os.path.join(write_dir, "Authors.csv")
 WB_PATH = os.path.join(write_dir, "Written_By.csv")
 BG_PATH = os.path.join(write_dir, "Book_Genre.csv")
+P_PATH = os.path.join(write_dir, "Publishers.csv")
 # BL_PATH = os.path.join(write_dir, "Book_Lang.csv")
 
-filepaths = [B_PATH,G_PATH,L_PATH,A_PATH,WB_PATH,BG_PATH]
+filepaths = [B_PATH,G_PATH,L_PATH,A_PATH,WB_PATH,BG_PATH,P_PATH]
 
 for filepath in filepaths:
     if os.path.isfile(filepath):
         os.remove(filepath)
 
 book_df.to_csv(B_PATH)
+publisher_df.to_csv(P_PATH)
 genre_df.to_csv(G_PATH)
 language_df.to_csv(L_PATH)
 author_df.to_csv(A_PATH)

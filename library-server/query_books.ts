@@ -3,6 +3,7 @@ import { Books, Book_Genre, Written_By, Authors, Genres, Languages } from "./tab
 import { BookQuery } from "./request_type";
 
 const page_items = 15;
+const max_pages = 100;
 
 interface QueryStats {
     num_books: number;
@@ -102,7 +103,7 @@ async function count_matching_books(filters) {
         col: 'book_id'
     });
 
-    let book_count = await Books.count(full_query);
+    let book_count = Math.min(await Books.count(full_query), max_pages * page_items);
     let pages_count = Math.ceil(book_count / page_items)
     let result_obj:QueryStats = { num_books: book_count, num_pages: pages_count }
     return result_obj;

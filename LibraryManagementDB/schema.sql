@@ -5,14 +5,15 @@ DROP TABLE IF EXISTS Reader_Login;
 DROP TABLE IF EXISTS Staff_Login;
 DROP TABLE IF EXISTS Report;
 DROP TABLE IF EXISTS Borrow;
-DROP TABLE IF EXISTS Published_By;
 DROP TABLE IF EXISTS Written_By;
 
 -- weak entities
 DROP TABLE IF EXISTS Copies;
 
--- strong entities
-DROP TABLE IF EXISTS Books;
+-- strong entities with dependencies
+DROP TABLE IF EXISTS Books; -- lang, publisher
+
+-- strong entities 
 DROP TABLE IF EXISTS Languages;
 DROP TABLE IF EXISTS Genres;
 DROP TABLE IF EXISTS Publishers;
@@ -23,14 +24,22 @@ DROP TABLE IF EXISTS Staffs;
 
 CREATE TABLE Languages (
     lang_id INT AUTO_INCREMENT PRIMARY KEY,
-    language VARCHAR(35)
+    language VARCHAR(50)
+);
+
+CREATE TABLE Publishers (
+    publisher_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(125)
 );
 
 CREATE TABLE Books (
     book_id INT AUTO_INCREMENT PRIMARY KEY,
     title NVARCHAR(256),
     lang_id INT NULL,
-    FOREIGN KEY (lang_id) REFERENCES Languages(lang_id)
+    FOREIGN KEY (lang_id) REFERENCES Languages(lang_id),
+    publisher_id INT NULL,
+    FOREIGN KEY (publisher_id) REFERENCES Publishers(publisher_id),
+    publish_date DATE NULL
 );
 
 CREATE TABLE Genres (
@@ -38,14 +47,9 @@ CREATE TABLE Genres (
     genre VARCHAR(30)
 );
 
-CREATE TABLE Publishers (
-    publisher_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50)
-);
-
 CREATE TABLE Authors (
     author_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50)
+    name VARCHAR(75)
 );
 
 CREATE TABLE Readers (
@@ -75,17 +79,8 @@ CREATE TABLE Copies (
     PRIMARY KEY (copy_id, book_id)
 ); 
 
-CREATE TABLE Published_By (
-    `date` DATE,
-    book_id INT,
-    FOREIGN KEY (book_id) REFERENCES Books(book_id),
-    publisher_id INT,
-    FOREIGN KEY (publisher_id) REFERENCES Publishers(publisher_id),
-    PRIMARY KEY (publisher_id, book_id)
-);
-
 CREATE TABLE Written_By (
-    role VARCHAR(30),
+    role VARCHAR(50),
     book_id INT,
     FOREIGN KEY (book_id) REFERENCES Books(book_id),
     author_id INT,

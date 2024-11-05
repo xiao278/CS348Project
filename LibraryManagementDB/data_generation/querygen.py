@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS Staffs;
 
 strong_entities = {'Books', 'Publishers', 'Authors', 'Readers', 'Logins', 'Staffs', 'Genres', 'Languages'}
 weak_entities = {'Copies'}
-relations = {'Wishist', 'Reader_Login', 'Staff_Login', 'Report', 'Borrow', 'Published_By', 'Written_By', 'Book_Genre'}
+relations = {'Wishist', 'Reader_Login', 'Staff_Login', 'Report', 'Borrow', 'Written_By', 'Book_Genre'}
 
 READ_DIR:str = os.path.dirname(__file__) + "/data_csv"
 S_WRITE_DIR:str = os.path.realpath(os.path.join(os.path.dirname(__file__), "../strong_entities_tables"))
