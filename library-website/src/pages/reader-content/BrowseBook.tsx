@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import "./BrowseBook.css"
 import { Credentials, BrowseTables } from "../../GeneralIntefaces";
 import { BookQuery } from "../../../../library-server/request_type";
+import Select from 'react-select';
 
 interface BookData extends Object {
     book_id: number;
@@ -76,7 +77,7 @@ function Browse(props: BrowseProps) {
     const setTables = props.setTables;
 
     const [ books, setBooks ] = useState<BookData[]>([]);
-    const [ lang, setLang ] = useState("");
+    const [ langOpt, setLangOpt ] = useState<BrowseTables['languages'][number] | null>({lang_id: 0, language: "Any"});
     const [ title, setTitle ] = useState("");
     const [ author, setAuthor ] = useState("");
     const [ publisher, setPublisher ] = useState("");
@@ -87,23 +88,11 @@ function Browse(props: BrowseProps) {
     const [ queryStats, setQueryStats ] = useState<any>({num_books: 0, num_pages: 0})
 
     async function fetchBookData(page) {
-        // match lang text with id, not the best way
-        let lang_id = 0;
-        if (tables != null) {
-            for (let i:number = 0; i < tables.languages.length; i++) {
-                let item = tables.languages[i]
-                if (lang === item.language) {
-                    lang_id = item.lang_id;
-                    break;
-                }
-            }
-        }
-
         const query:BookQuery = {
             title: title,
             author: author,
             publisher: publisher,
-            language_id: lang_id,
+            language_id: langOpt === null ? 0 : langOpt.lang_id,
             genres: genres
         }
         
@@ -186,16 +175,16 @@ function Browse(props: BrowseProps) {
         mog();
     });
 
-    function populateLangList() {
-        if (tables === null) {
-            return <></>
-        }
-        else {
-            return tables.languages.map((item) => (
-                <option key={item.lang_id} value={item.language}></option>
-            ))
-        }
-    }
+    // function populateLangList() {
+    //     if (tables === null) {
+    //         return <></>
+    //     }
+    //     else {
+    //         return tables.languages.map((item) => (
+    //             <option key={item.lang_id} value={item.language}></option>
+    //         ))
+    //     }
+    // }
 
     function calc_books_displayed() {
         let lowerBound = Math.min((curPage - 1) * page_items + 1, queryStats.num_books)
@@ -203,29 +192,48 @@ function Browse(props: BrowseProps) {
         return `${lowerBound}-${upperBound}`;
     }
 
-
+    const selectStyles = {
+        menuList: styles => {
+          return {
+            ...styles,
+            maxHeight: 150
+          };
+        }
+      };
 
     return (
         <div className='Browse-Container'>
             <div className='Browse-Filter-Container'>
                 <div>
                     <p>Title: </p>
-                    <input type="text" onChange={(e) => {setTitle(e.target.value)}}></input>
+                    <div className='Input-Field'>
+                        <input type="text" onChange={(e) => {setTitle(e.target.value)}}></input>
+                    </div>
                 </div>
                 <div>
                     <p>Author: </p>
-                    <input type="text" onChange={(e) => {setAuthor(e.target.value)}}></input>
+                    <div className='Input-Field'>
+                        <input type="text" onChange={(e) => {setAuthor(e.target.value)}}></input>
+                    </div>
                 </div>
                 <div>
                     <p>Publisher: </p>
-                    <input type="text" onChange={(e) => {setPublisher(e.target.value)}}></input>
+                    <div className='Input-Field'>
+                        <input type="text" onChange={(e) => {setPublisher(e.target.value)}}></input>
+                    </div>
                 </div>
                 <div>
                     <p>Language: </p>
-                    <input list="language_options" type="datalist" onChange={(e) => {setLang(e.target.value)}}></input>
-                    <datalist id="language_options">
-                        {populateLangList()}
-                    </datalist>
+                    <Select 
+                        className='Input-Field'
+                        value={langOpt}
+                        onChange={(option) => {setLangOpt(option)}}
+                        options={tables === null ? [{lang_id: 0, language: "Any"}] : tables.languages.concat({lang_id: 0, language: "Any"})}
+                        placeholder="Search Languages..."
+                        getOptionLabel={(option) => option.language}
+                        getOptionValue={(option) => option.lang_id.toString()}
+                        styles={selectStyles}
+                    ></Select>
                 </div>
                 <div>
                     <p>Genres: </p>
