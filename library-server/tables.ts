@@ -141,7 +141,7 @@ Languages.init(
             autoIncrement: true,
         },
         language: {
-            type: DataTypes.STRING(35)
+            type: DataTypes.STRING(50)
         }
     },
     {
@@ -150,6 +150,23 @@ Languages.init(
     }
 );
 
+class Publishers extends Model {}
+Publishers.init(
+    {
+        publisher_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        name: {
+            type: DataTypes.STRING(125)
+        }
+    },
+    {
+        sequelize,
+        modelName: "Publishers"
+    }
+)
 
 class Books extends Model {}
 Books.init(
@@ -169,6 +186,18 @@ Books.init(
                 key: "lang_id"
             },
             allowNull: true
+        },
+        publisher_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Publishers,
+                key: "publisher_id"
+            },
+            allowNull: true
+        },
+        publish_date: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     },
     {
@@ -187,7 +216,7 @@ Authors.init(
             autoIncrement: true,
         },
         name: {
-            type: DataTypes.STRING(50),
+            type: DataTypes.STRING(75),
         }
     },
     {
@@ -277,11 +306,14 @@ Books.belongsToMany(Genres, {through: Book_Genre, foreignKey: "book_id"});
 Genres.belongsToMany(Books, {through: Book_Genre, foreignKey: "genre_id"});
 
 Languages.hasMany(Books, {foreignKey: "lang_id"});
-Books.belongsTo(Languages, {foreignKey: "lang_id"})
+Books.belongsTo(Languages, {foreignKey: "lang_id"});
+
+Publishers.hasMany(Books, {foreignKey: "publisher_id"});
+Books.belongsTo(Publishers, {foreignKey: "publisher_id"})
 
 export {sequelize, 
     Logins, Readers, Staffs, Reader_Login, Staff_Login,
-    Books, Languages,
+    Books, Languages, Publishers,
     Genres, Book_Genre,
     Authors, Written_By
 }

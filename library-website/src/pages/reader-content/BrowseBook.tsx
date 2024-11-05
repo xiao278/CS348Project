@@ -6,7 +6,7 @@ import { BookQuery } from "../../../../library-server/request_type";
 interface BookData extends Object {
     book_id: number;
     title: string;
-    Publisher: any;
+    Publisher: {name: string};
     Language: any;
     Authors: {name: string}[];
     Genres: any[];
@@ -30,7 +30,7 @@ function BookCard(props: BookCardProps) {
     const extractAuthorNames = (list: BookData['Authors']) => {
         let names:string[] = [];
         list.map((item) => names.push(item.name));
-        return names.toString();
+        return names.join(", ");
     }
     
     return (
@@ -38,7 +38,7 @@ function BookCard(props: BookCardProps) {
             <div className='Info-Container'>
                 <div>Title: {data.title}</div>
                 <div>Author(s): {extractAuthorNames(data.Authors)}</div>
-                <div>Published By: {"N/A"}</div>
+                <div>Publisher: {data.Publisher.name}</div>
                 <div>Language: {data.Language === null ? "N/A" : data.Language.language}</div>
                 <div>Genre(s): {"N/A"}</div>
             </div>
@@ -189,6 +189,10 @@ function Browse(props: BrowseProps) {
                 <div>
                     <p>Author: </p>
                     <input type="text" onChange={(e) => {setAuthor(e.target.value)}}></input>
+                </div>
+                <div>
+                    <p>Publisher: </p>
+                    <input type="text" onChange={(e) => {setPublisher(e.target.value)}}></input>
                 </div>
                 <div>
                     <p>Language: </p>

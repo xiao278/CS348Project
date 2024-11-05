@@ -1,5 +1,5 @@
 import { col, fn, Includeable, Op, Options, WhereOptions } from "sequelize";
-import { Books, Book_Genre, Written_By, Authors, Genres, Languages } from "./tables";
+import { Books, Book_Genre, Written_By, Authors, Genres, Languages, Publishers } from "./tables";
 import { BookQuery } from "./request_type";
 
 const page_items = 15;
@@ -11,31 +11,41 @@ interface QueryStats {
 }
 
 function build_query_base(filters:BookQuery, isCounting:boolean) {
-    let title_match:WhereOptions = {}
+    let title_match:WhereOptions = {};
     if (filters.title.length > 0) {
         title_match = {
             title: {
                 [Op.like]: `%${filters.title}%`
             }
-        }
-    }
+        };
+    };
 
-    let does_match_author:boolean = filters.author.length > 0
-    let author_match:WhereOptions = {}
+    let does_match_author:boolean = filters.author.length > 0;
+    let author_match:WhereOptions = {};
     if (does_match_author) {
         author_match = {
             "name": {
                 [Op.like]: `%${filters.author}%`
             }
-        }
-    }
+        };
+    };
 
-    let does_match_lang:boolean = filters.language_id > 0
-    let lang_match:WhereOptions = {}
+    let does_match_lang:boolean = filters.language_id > 0;
+    let lang_match:WhereOptions = {};
     if (does_match_lang) {
         lang_match = {
             "lang_id": filters.language_id
-        }
+        };
+    };
+
+    let does_match_pub:boolean = filters.publisher.length > 0;
+    let pub_match:WhereOptions = {};
+    if (does_match_pub) {
+        pub_match = {
+            "name": {
+                [Op.like]: `%${filters.publisher}%`
+            }
+        };
     }
 
     // let does_match_genre:boolean = filters.genres.length > 0
@@ -72,6 +82,12 @@ function build_query_base(filters:BookQuery, isCounting:boolean) {
                 required: does_match_lang,
                 attributes: isCounting ? [] : ['language'],
                 where: lang_match,
+            },
+            {
+                model: Publishers,
+                required: does_match_pub,
+                attributes: isCounting ? [] : ['name'],
+                where: pub_match
             }
         ],
         where: title_match,
