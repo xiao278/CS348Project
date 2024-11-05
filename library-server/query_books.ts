@@ -48,7 +48,7 @@ function build_query_base(filters:BookQuery, isCounting:boolean) {
         };
     }
 
-    // let does_match_genre:boolean = filters.genres.length > 0
+    let does_match_genre:boolean = filters.genres.length > 0
     // let genre_match:WhereOptions = {}
     // if (does_match_genre) {
     //     let include_list:number[] = []
@@ -88,6 +88,15 @@ function build_query_base(filters:BookQuery, isCounting:boolean) {
                 required: does_match_pub,
                 attributes: isCounting ? [] : ['name'],
                 where: pub_match
+            },
+            {
+                model: Genres,
+                required: does_match_genre,
+                attributes: isCounting ? [] : ['genre'],
+                through: {
+                    attributes:[]
+                },
+                where: {}
             }
         ],
         where: title_match,
@@ -116,10 +125,11 @@ async function count_matching_books(filters) {
     let full_query = Object.assign({}, partial_query, {
         logging: false,
         distinct: true,
-        col: 'book_id'
+        col: 'book_id',
+        limit: max_pages * page_items
     });
 
-    let book_count = Math.min(await Books.count(full_query), max_pages * page_items);
+    let book_count = await Books.count(full_query);
     let pages_count = Math.ceil(book_count / page_items)
     let result_obj:QueryStats = { num_books: book_count, num_pages: pages_count }
     return result_obj;

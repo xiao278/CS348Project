@@ -9,7 +9,7 @@ interface BookData extends Object {
     Publisher: {name: string};
     Language: any;
     Authors: {name: string}[];
-    Genres: any[];
+    Genres: {genre: string}[];
 }
 
 interface BookCardProps {
@@ -26,21 +26,41 @@ interface BrowseProps {
 function BookCard(props: BookCardProps) {
     const data = props.data
     const setDataCardInfo = props.setDataCardInfo
-
+    
     const extractAuthorNames = (list: BookData['Authors']) => {
-        let names:string[] = [];
-        list.map((item) => names.push(item.name));
-        return names.join(", ");
+        try {
+            if (list.length === 0) return "N/A";
+            let names:string[] = [];
+            list.map((item) => names.push(item.name));
+            return names.join(", ");
+        } catch(e) {
+            console.log(props);
+            console.log(e);
+            return "N/A: Error";
+        }
     }
+
+    const extractGenres = ((list: BookData['Genres']) => {
+        try {
+            if (list.length === 0) return "N/A";
+            let genres:string[] = [];
+            list.map((item) => genres.push(item.genre));
+            return genres.join(", ");
+        } catch(e) {
+            console.log(props);
+            console.log(e);
+            return "N/A: Error";
+        }
+    });
     
     return (
         <div className='Book-Card-Container'>
             <div className='Info-Container'>
                 <div>Title: {data.title}</div>
                 <div>Author(s): {extractAuthorNames(data.Authors)}</div>
-                <div>Publisher: {data.Publisher.name}</div>
+                <div>Publisher: {data.Publisher === null ? "N/A": data.Publisher.name}</div>
                 <div>Language: {data.Language === null ? "N/A" : data.Language.language}</div>
-                <div>Genre(s): {"N/A"}</div>
+                <div>Genre(s): {extractGenres(data.Genres)}</div>
             </div>
             <div className='Buttons-Container'>
                 <button className='More-Button'>More</button>
@@ -60,6 +80,7 @@ function Browse(props: BrowseProps) {
     const [ title, setTitle ] = useState("");
     const [ author, setAuthor ] = useState("");
     const [ publisher, setPublisher ] = useState("");
+    const [ genres, setGenres ] = useState([])
     
     const [ curFilters, setCurFilters ] = useState<BookQuery | null>(null)
     const [ curPage, setCurPage ] = useState(1)
@@ -83,7 +104,7 @@ function Browse(props: BrowseProps) {
             author: author,
             publisher: publisher,
             language_id: lang_id,
-            genres: []
+            genres: genres
         }
         
         const findBookReq = {
@@ -128,6 +149,11 @@ function Browse(props: BrowseProps) {
         .then(response => {
             if (response.ok) {
                 return response.json();
+            }
+            else {
+                setBooks([]);
+                setCurPage(1);
+                setQueryStats({num_books: 0, num_pages: 0});
             }
         });
         if (response != null) {
