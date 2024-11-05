@@ -13,6 +13,11 @@ interface BookData extends Object {
     Genres: {genre: string}[];
 }
 
+interface Genres {
+    genre_id: number; //LIKE "%"
+    genre: string;
+}
+
 interface BookCardProps {
     data: BookData;
     setDataCardInfo: any;
@@ -81,11 +86,19 @@ function Browse(props: BrowseProps) {
     const [ title, setTitle ] = useState("");
     const [ author, setAuthor ] = useState("");
     const [ publisher, setPublisher ] = useState("");
-    const [ genres, setGenres ] = useState([])
+    const [ incGenres, setIncGenres ] = useState<Genres[]>([]);
+    const [ excGenres, setExcGenres ] = useState<Genres[]>([]);
+
     
     const [ curFilters, setCurFilters ] = useState<BookQuery | null>(null)
     const [ curPage, setCurPage ] = useState(1)
     const [ queryStats, setQueryStats ] = useState<any>({num_books: 0, num_pages: 0})
+
+    function extractGenreIds(input_list:Genres[]) {
+        let output_list:number[] = [];
+        input_list.map((item) => {output_list.push(item.genre_id)});
+        return output_list;
+    }
 
     async function fetchBookData(page) {
         const query:BookQuery = {
@@ -93,7 +106,8 @@ function Browse(props: BrowseProps) {
             author: author,
             publisher: publisher,
             language_id: langOpt === null ? 0 : langOpt.lang_id,
-            genres: genres
+            include_genre_ids: extractGenreIds(incGenres),
+            exclude_genre_ids: extractGenreIds(excGenres),
         }
         
         const findBookReq = {
@@ -175,17 +189,6 @@ function Browse(props: BrowseProps) {
         mog();
     });
 
-    // function populateLangList() {
-    //     if (tables === null) {
-    //         return <></>
-    //     }
-    //     else {
-    //         return tables.languages.map((item) => (
-    //             <option key={item.lang_id} value={item.language}></option>
-    //         ))
-    //     }
-    // }
-
     function calc_books_displayed() {
         let lowerBound = Math.min((curPage - 1) * page_items + 1, queryStats.num_books)
         let upperBound = Math.min((curPage) * page_items, queryStats.num_books)
@@ -196,10 +199,38 @@ function Browse(props: BrowseProps) {
         menuList: styles => {
           return {
             ...styles,
-            maxHeight: 150
+            maxHeight: 150,
+            overflow: "hidden"
           };
-        }
-      };
+        },
+        control: (provided, state) => ({
+            ...provided,
+            background: '#fff',
+            borderColor: '#9e9e9e',
+            minHeight: '100%',
+            height: '0px',
+            boxShadow: state.isFocused ? null : null,
+            borderRadius: '3px'
+        }),
+        valueContainer: (provided, state) => ({
+            ...provided,
+            height: '0px',
+            minHeight: '100%',
+            padding: '0',
+        }),
+        input: (provided, state) => ({
+            ...provided,
+            margin: '0px',
+        }),
+        indicatorSeparator: state => ({
+            display: 'none',
+        }),
+        indicatorsContainer: (provided, state) => ({
+            ...provided,
+            height: '0px',
+            minHeight: '100%'
+        }),
+    };
 
     return (
         <div className='Browse-Container'>
@@ -235,9 +266,24 @@ function Browse(props: BrowseProps) {
                         styles={selectStyles}
                     ></Select>
                 </div>
-                <div>
-                    <p>Genres: </p>
-                    <input type="text"></input>
+                <div className='Genre-Container'>
+                    <p>Include Genres: </p>
+                    <Select 
+                        isMulti
+                        options={tables === null ? [] : tables.genres}
+                        getOptionLabel={(option) => option.genre}
+                        getOptionValue={(option) => option.genre_id.toString()}
+                        onChange={(options) => setIncGenres(options as Genres[])}
+                    ></Select>
+                </div>
+                <div className='Genre-Container'>
+                    <p>Exclude Genres: </p>
+                    <Select 
+                        isMulti
+                        options={tables === null ? [] : tables.genres}
+                        getOptionLabel={(option) => option.genre}
+                        getOptionValue={(option) => option.genre_id.toString()}
+                    ></Select>
                 </div>
                 <div>
                     <button onClick={() => {setCurPage(1); fetchBookData(1)}} className='Common-Button'> Apply Filters </button>

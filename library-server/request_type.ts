@@ -9,17 +9,13 @@ interface LoginPayload {
     password: string;
 }
 
-interface BookGenre {
-    id: number; //LIKE "%"
-    include: boolean;
-}
-
 interface BookQuery {
     title: string; //LIKE "%title%"
     publisher: string; //LIKE "%pub%"
     language_id: number; //LIKE "lang" (direct match)
     author: string; //LIKE "%author%" 
-    genres: BookGenre[]; 
+    include_genre_ids: number[]; 
+    exclude_genre_ids: number[]; 
 }
 
 export {LoginPayload, BookQuery};

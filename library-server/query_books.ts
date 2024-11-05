@@ -48,23 +48,16 @@ function build_query_base(filters:BookQuery, isCounting:boolean) {
         };
     }
 
-    let does_match_genre:boolean = filters.genres.length > 0
-    // let genre_match:WhereOptions = {}
-    // if (does_match_genre) {
-    //     let include_list:number[] = []
-    //     let exclude_list:number[] = []
-    //     filters.genres.forEach((item) => {
-    //         if (item.include) {
-    //             include_list.push(item.id)
-    //         }
-    //         else {
-    //             exclude_list.push(item.id)
-    //         }
-    //     });
-    //     genre_match = {
-            
-    //     }
-    // }
+    let does_match_genre:boolean = filters.include_genre_ids.length > 0 || filters.exclude_genre_ids.length > 0;
+    let genre_match:WhereOptions = {}
+    if (does_match_genre) {
+        genre_match = {
+            genre_id: {
+                [Op.in]:filters.include_genre_ids,
+                [Op.notIn]: filters.exclude_genre_ids
+            }
+        }
+    }
 
     let partial_query = {
         include: [
@@ -92,12 +85,12 @@ function build_query_base(filters:BookQuery, isCounting:boolean) {
             {
                 model: Genres,
                 required: does_match_genre,
-                attributes: isCounting ? [] : ['genre'],
+                attributes: [], //isCounting ? [] : ['genre'],
                 through: {
                     attributes:[]
                 },
-                where: {}
-            }
+                where: genre_match
+            },
         ],
         where: title_match,
         attributes: isCounting ? [] : ['book_id', 'title'],
@@ -114,10 +107,42 @@ async function find_matching_books(filters: BookQuery, page: number) {
         limit: page_items,
         offset: (page - 1) * page_items
     });
-    
-    let matching_books = await Books.findAll(full_query).then((query) => query.map((tuple) => tuple.toJSON()));
 
-    return matching_books;
+
+    let book_map = new Map();
+    let book_ids = []
+
+    //query matching books (wtihout genre) and save their id and have a map
+    await Books.findAll(full_query).then((query) => query.map((tuple) => {
+        let book_data:any = tuple.toJSON();
+        book_ids.push(book_data.book_id)
+        book_map.set(book_data.book_id, book_data);
+    }));
+    
+    //load genre from matching book ids
+    await Books.findAll({
+        attributes: ['book_id'],
+        include: [
+            {
+                model: Genres,
+                attributes: ['genre'],
+                through: {
+                    attributes:[]
+                },
+            }
+        ],
+        where: {
+            book_id: {
+                [Op.in]: book_ids
+            }
+        }
+    }).then((query) => query.map((tuple) => {
+        let genre_data = tuple.toJSON();
+        let book_data = book_map.get(genre_data.book_id);
+        book_data["Genres"] = genre_data.Genres;
+    }));
+
+    return Array.from(book_map.values());;
 }
 
 async function count_matching_books(filters) {
