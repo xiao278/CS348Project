@@ -135,8 +135,14 @@ function BookCard(props: BookCardProps) {
 }
 
 function InfoCard(props: InfoCardProps) {
+    interface Counts {
+        available: number;
+        borrowed: number;
+        lost: number;
+    }
     const [ bookInfo, setBookInfo ] = useState<BookInfoData[]>();
     const [ showEditor, setShowEditor ] = useState(false);
+    const [ counts, setCounts ] = useState<Counts>({available: 0, borrowed: 0, lost: 0})
 
     const query: BookInfoRequest = {
         book_id: props.book.book_id,
@@ -162,45 +168,58 @@ function InfoCard(props: InfoCardProps) {
 
     useEffect(() => {
         fetchBookInfo()
+        console.log("fetched book info")
     },[]);
 
-    /* [{"copy_id":1,"status":"borrowed"}] */
+    useEffect(() => {
+        let avCounts = 0
+        let boCounts = 0
+        let loCounts = 0
+        bookInfo?.map((item) => {
+            if (item.status === 'available') avCounts++;
+            if (item.status === 'borrowed') boCounts++;
+            if (item.status === 'lost') loCounts++;
+        })
+        setCounts({available: avCounts, borrowed: boCounts, lost: loCounts})
+        console.log("tallied copies")
+    }, [bookInfo])
 
     function availTable(data:BookInfoData[]) {
         return (
-          <table className='Info-Table' border={1}>
-            <thead>
-              <tr>
-                <th>Copy ID</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item) => (
-                <tr key={item.copy_id}>
-                  <td>{item.copy_id}</td>
-                  <td>{item.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <table className='Info-Table' border={1}>
+                <thead>
+                    <tr>
+                        <th>Available</th>
+                        <th>Borrowed</th>
+                        <th>Lost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{counts.available}</td>
+                        <td>{counts.borrowed}</td>
+                        <td>{counts.lost}</td>
+                    </tr>
+                </tbody>
+            </table>
         );
     }
 
     return (
-        <div className='Book-Info-Popout'>
-            <div>
+        <div className='Book-Info-Popout' style={{overflow: "scroll"}}>
+            <div style={{position: "sticky", top: 0}}>
                 <button className='Common-Button' onClick={()=>{props.setShowCard(false)}}>x</button>
-                <div>viewing more information for <span style={{
+            </div>
+            <div>viewing more information for <span style={{
                     backgroundColor: "yellow",
                     padding: "2px",
                     borderRadius: "3px"
-                }}>{props.book.title}</span></div>
+                }}>{props.book.title}</span>
             </div>
             <div>
                 <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'flex-start', gap: '10px'}}>
                     <h1>Availability</h1>
-                    {sessionStorage.getItem("role") === "staff" ? <button className='No-Button' onClick={() => {setShowEditor(true)}}>Manage</button> : <></>}
+                    {sessionStorage.getItem("role") === "staff" ? <button className='Text-Button' onClick={() => {setShowEditor(true)}}>Manage</button> : <></>}
                     {showEditor ? <ManageCopies setShowEditor={setShowEditor} book={props.book}/> : <></>}
                 </div>
                 {bookInfo !== undefined ? availTable(bookInfo) : "N/A"}

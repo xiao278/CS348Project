@@ -78,7 +78,7 @@ function BookCard(props: BookCardProps) {
         });
         if (response !== undefined) {
             if (!response.success) {
-                alert(`CHECKOUT FAILURE: ${response.message}`)
+                alert(`RETURN FAILURE: ${response.message}`)
             }
         }
     }

@@ -13,19 +13,19 @@ function ManageCopies(props: ManageCopiesProps) {
     const [ copiesInfo, setCopiesInfo ] = useState<BookInfoData[]>();
     const [ copyId, setCopyId ] = useState<number>()
 
-    const username = sessionStorage.getItem("username");
-    const password = sessionStorage.getItem("password");
-    if (username === null || password === null) {
-        throw new Error("invalid username / password")
-    }
-    const query: BookInfoRequest = {
-        auth: {
-            username: username,
-            password: password
-        },
-        book_id: props.book.book_id
-    }
     async function fetchCopiesInfo() {
+        const username = sessionStorage.getItem("username");
+        const password = sessionStorage.getItem("password");
+        if (username === null || password === null) {
+            throw new Error("invalid username / password")
+        }
+        const query: BookInfoRequest = {
+            auth: {
+                username: username,
+                password: password
+            },
+            book_id: props.book.book_id
+        }
         let response:BookInfoData[] = await fetch("http://localhost:8080/getBookInfo",
             {
                 method: "POST",
@@ -40,7 +40,6 @@ function ManageCopies(props: ManageCopiesProps) {
             }
         });
         setCopiesInfo(response);
-        console.log(response)
     }
 
     async function addCopy() {
@@ -54,8 +53,10 @@ function ManageCopies(props: ManageCopiesProps) {
             auth: {
                 username: username,
                 password: password
-            }
+            },
+            copy_id: copyId
         }
+        console.log(query)
         let response: BorrowStatus | void = await fetch("http://localhost:8080/createBookCopy",
             {
                 method: "POST",
@@ -71,7 +72,7 @@ function ManageCopies(props: ManageCopiesProps) {
         });
         if (response !== undefined) {
             if (!response.success) {
-                alert(`CHECKOUT FAILURE: ${response.message}`)
+                alert(`OPERATION FAILURE: ${response.message}`)
             }
         }
         fetchCopiesInfo()
@@ -100,7 +101,7 @@ function ManageCopies(props: ManageCopiesProps) {
 
     return (
         <div style={{position: "fixed", top: 0, bottom: 0, left: 0, right: 0, backgroundColor:"rgba(0,0,0,0.5)", display:'flex', justifyContent:'center', alignItems:'center', flexDirection:'column', gap:'30px', zIndex:999}}>
-            <button className='Common-Button' style={{position: "fixed", right: "30px", top: "30px", fontSize: "20px"}} onClick={() => {props.setShowEditor(false)}}>Close</button>
+            <button className='Common-Button' style={{position: "fixed", left: "30px", top: "30px", fontSize: "20px"}} onClick={() => {props.setShowEditor(false)}}>Close</button>
             <div className="ManageCopiesTable">
                 <table style={{borderSpacing: "0 10px", border:0}}>
                     <thead>

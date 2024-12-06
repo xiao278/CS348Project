@@ -326,7 +326,7 @@ async function create_book_copy(filter: AlterCopyRequest): Promise<BorrowStatus>
     if (filter.copy_id < 1 || filter.copy_id > 128) return {success: false, message: "copy_id out of range"}
 
     const record = await Copies.findOne({
-        attributes: [],
+        attributes: ['copy_id'],
         where: {
             [Op.and]: [
                 {book_id: filter.book_id},
@@ -339,7 +339,7 @@ async function create_book_copy(filter: AlterCopyRequest): Promise<BorrowStatus>
     }
     await Copies.create({
         book_id: filter.book_id,
-        copy_id: filter.book_id,
+        copy_id: filter.copy_id,
         status: "available"
     })
     return {success: true, message: ""}
