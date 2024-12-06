@@ -182,6 +182,22 @@ app.post("/createBookCopy", jsonParser, async (req, res) => {
     }
 })
 
+app.post("/deleteBookCopy", jsonParser, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+    //TODO add login verification
+    try {
+        let filters:AlterCopyRequest = req.body;
+        let result = await db.delete_book_copy(filters);
+        res.status(200).send(result);
+    }
+    catch (e) {
+        console.log(e)
+        res.status(404).send({message: e.message});
+    }
+})
+
 app.post("/forceReturnBook", jsonParser, async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Headers', 'Content-Type');

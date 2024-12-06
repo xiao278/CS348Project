@@ -56,7 +56,6 @@ function ManageCopies(props: ManageCopiesProps) {
             },
             copy_id: copyId
         }
-        console.log(query)
         let response: BorrowStatus | void = await fetch("http://localhost:8080/createBookCopy",
             {
                 method: "POST",
@@ -92,7 +91,6 @@ function ManageCopies(props: ManageCopiesProps) {
             },
             copy_id: input
         }
-        console.log(query)
         let response: BorrowStatus | void = await fetch("http://localhost:8080/forceReturnBook",
             {
                 method: "POST",
@@ -114,6 +112,40 @@ function ManageCopies(props: ManageCopiesProps) {
         fetchCopiesInfo()
     }
     
+    async function deleteCopy(input: number) {
+        const username = sessionStorage.getItem("username");
+        const password = sessionStorage.getItem("password");
+        if (username === null || password === null) {
+            throw new Error("invalid username / password")
+        }
+        const query: AlterCopyRequest = {
+            book_id: props.book.book_id,
+            auth: {
+                username: username,
+                password: password
+            },
+            copy_id: input
+        }
+        let response: BorrowStatus | void = await fetch("http://localhost:8080/deleteBookCopy",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(query)
+            }
+        ).then(res => {
+            if (res.ok) {
+                return res.json();
+            }
+        });
+        if (response !== undefined) {
+            if (!response.success) {
+                alert(`OPERATION FAILURE: ${response.message}`)
+            }
+        }
+        fetchCopiesInfo()
+    }
 
     useEffect(() => {
         fetchCopiesInfo()
@@ -165,7 +197,7 @@ function ManageCopies(props: ManageCopiesProps) {
                                 <td>{(!item.borrower) ? "N/A" : item.borrower}</td>
                                 <TdDivider />
                                 <td className='LastCell'>
-                                    <button className='Text-Button'>Remove</button>
+                                    <button className='Text-Button' onClick={() => {deleteCopy(item.copy_id)}}>Remove</button>
                                     <button className='Text-Button' onClick={() => {forceReturnCopy(item.copy_id)}}>Return</button>
                                 </td>
                                 <td className='FillCell'></td>

@@ -352,10 +352,13 @@ async function create_book_copy(filter: AlterCopyRequest): Promise<OpStatus> {
             ) t2 ON t1.copy_id + 1 = t2.copy_id
             WHERE t2.copy_id IS NULL
         `);
-        if (typeof smallest_unused_id === 'number' && smallest_unused_id > 128) return {success: false, message: "max copy limit reached"}
+        let new_copy_id:number = smallest_unused_id[0].smallest_new_id;
+        if (new_copy_id === null) new_copy_id = 1
+        if (new_copy_id > 128) return {success: false, message: "max copy limit reached"}
+
         await Copies.create({
             book_id: filter.book_id,
-            copy_id: smallest_unused_id[0].smallest_new_id,
+            copy_id: new_copy_id,
             status: "available"
         })
         return {success: true, message: ""}
@@ -384,9 +387,40 @@ async function create_book_copy(filter: AlterCopyRequest): Promise<OpStatus> {
     return {success: true, message: ""}
 }
 
+async function delete_book_copy(filter: AlterCopyRequest): Promise<OpStatus> {
+    const auth = filter.auth;
+    // make sure username is staff
+    const user_verify = await verify_login(auth.username, auth.password)
+    if (user_verify !== 'staff') {
+        return {success: false, message: "invalid login"}
+    }
+
+    if (!filter.copy_id) return {
+        success: false,
+        message: "copy_id not provided"
+    }
+
+    const deleted = Copies.destroy({
+        where: {
+            [Op.and]: [
+                {book_id: filter.book_id},
+                {copy_id: filter.copy_id}
+            ]
+        }
+    })
+    if (!deleted) return {
+        success: false,
+        message: "no record found to delete"
+    }
+    return {
+        success: true,
+        message: ""
+    }
+}
+
 export{
     find_matching_books, send_tables, count_matching_books, 
     get_book_info, checkout_book, OpStatus as BorrowStatus, get_borrows, 
     return_book, force_return_book,
-    create_book_copy,
+    create_book_copy, delete_book_copy
 }
