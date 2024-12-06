@@ -342,49 +342,64 @@ async function create_book_copy(filter: AlterCopyRequest): Promise<OpStatus> {
 
     // auto set id 
     if (!filter.copy_id) {
-        const [smallest_unused_id]:Object[] = await sequelize.query(`
-            SELECT MIN(t1.copy_id + 1) AS smallest_new_id
-            FROM (
-                SELECT * FROM Copies c WHERE c.book_id = ${filter.book_id}
-            ) t1
-            LEFT JOIN (
-                SELECT * FROM Copies c WHERE c.book_id = ${filter.book_id}
-            ) t2 ON t1.copy_id + 1 = t2.copy_id
-            WHERE t2.copy_id IS NULL
-        `);
-        let new_copy_id:number = smallest_unused_id[0].smallest_new_id;
-        if (new_copy_id === null) new_copy_id = 1
-        if (new_copy_id > 128) return {success: false, message: "max copy limit reached"}
-
-        await Copies.create({
-            book_id: filter.book_id,
-            copy_id: new_copy_id,
-            status: "available"
-        })
-        return {success: true, message: ""}
+        const t = await sequelize.transaction()
+        try {
+            const [smallest_unused_id]:Object[] = await sequelize.query(`
+                SELECT MIN(t1.copy_id + 1) AS smallest_new_id
+                FROM (
+                    SELECT * FROM Copies c WHERE c.book_id = ${filter.book_id}
+                ) t1
+                LEFT JOIN (
+                    SELECT * FROM Copies c WHERE c.book_id = ${filter.book_id}
+                ) t2 ON t1.copy_id + 1 = t2.copy_id
+                WHERE t2.copy_id IS NULL
+            `);
+            let new_copy_id:number = smallest_unused_id[0].smallest_new_id;
+            if (new_copy_id === null) new_copy_id = 1
+            if (new_copy_id > 128) return {success: false, message: "max copy limit reached"}
+    
+            await Copies.create({
+                book_id: filter.book_id,
+                copy_id: new_copy_id,
+                status: "available"
+            });
+            await t.commit()
+            return {success: true, message: ""}
+        }
+        catch (e) {
+            await t.rollback()
+            throw e
+        }
     }
 
     // manual set id, but check first if its available
     if (filter.copy_id < 1 || filter.copy_id > 128) return {success: false, message: "copy_id out of range"}
-
-    const record = await Copies.findOne({
-        attributes: ['copy_id'],
-        where: {
-            [Op.and]: [
-                {book_id: filter.book_id},
-                {copy_id: filter.copy_id}
-            ]
+    const t = await sequelize.transaction()
+    try {
+        const record = await Copies.findOne({
+            attributes: ['copy_id'],
+            where: {
+                [Op.and]: [
+                    {book_id: filter.book_id},
+                    {copy_id: filter.copy_id}
+                ]
+            }
+        })
+        if (record) {
+            return {success: false, message: "copy_id already exists"}
         }
-    })
-    if (record) {
-        return {success: false, message: "copy_id already exists"}
+        await Copies.create({
+            book_id: filter.book_id,
+            copy_id: filter.copy_id,
+            status: "available"
+        })
+        await t.commit()
+        return {success: true, message: ""}
     }
-    await Copies.create({
-        book_id: filter.book_id,
-        copy_id: filter.copy_id,
-        status: "available"
-    })
-    return {success: true, message: ""}
+    catch (e) {
+        await t.rollback()
+        throw e
+    }
 }
 
 async function delete_book_copy(filter: AlterCopyRequest): Promise<OpStatus> {
@@ -400,21 +415,29 @@ async function delete_book_copy(filter: AlterCopyRequest): Promise<OpStatus> {
         message: "copy_id not provided"
     }
 
-    const deleted = Copies.destroy({
-        where: {
-            [Op.and]: [
-                {book_id: filter.book_id},
-                {copy_id: filter.copy_id}
-            ]
+    const t = await sequelize.transaction()
+    try {
+        const deleted = Copies.destroy({
+            where: {
+                [Op.and]: [
+                    {book_id: filter.book_id},
+                    {copy_id: filter.copy_id}
+                ]
+            }
+        })
+        await t.commit()
+        if (!deleted) return {
+            success: false,
+            message: "no record found to delete"
         }
-    })
-    if (!deleted) return {
-        success: false,
-        message: "no record found to delete"
+        return {
+            success: true,
+            message: ""
+        }
     }
-    return {
-        success: true,
-        message: ""
+    catch (e) {
+        await t.rollback()
+        throw e
     }
 }
 
