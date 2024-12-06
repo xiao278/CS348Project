@@ -13,7 +13,7 @@ interface QueryStats {
     num_pages: number;
 }
 
-interface BorrowStatus {
+interface OpStatus {
     success: boolean;
     message: string;
 }
@@ -189,7 +189,7 @@ async function get_book_info(filters:BookInfoRequest, showBorrower:boolean=false
     return result;
 }
 
-async function checkout_book(filters:BorrowRequest):Promise<BorrowStatus> {
+async function checkout_book(filters:BorrowRequest):Promise<OpStatus> {
     const auth = filters.auth;
     // make sure username and password are correct
     const user_verify = await verify_login(auth.username, auth.password)
@@ -264,7 +264,7 @@ async function get_borrows(filters:LoginPayload) {
     }
 }
 
-async function return_book(filter: BorrowRequest): Promise<BorrowStatus> {
+async function return_book(filter: BorrowRequest): Promise<OpStatus> {
     const auth = filter.auth;
     // make sure username and password are correct
     const user_verify = await verify_login(auth.username, auth.password)
@@ -293,7 +293,46 @@ async function return_book(filter: BorrowRequest): Promise<BorrowStatus> {
     }
 }
 
-async function create_book_copy(filter: AlterCopyRequest): Promise<BorrowStatus> {
+async function force_return_book(filter: AlterCopyRequest): Promise<OpStatus> {
+    const auth = filter.auth;
+    // make sure username is staff
+    const user_verify = await verify_login(auth.username, auth.password)
+    if (user_verify !== 'staff') {
+        return {success: false, message: "invalid login"}
+    }
+
+    if (!filter.copy_id) return {
+        success: false,
+        message: "no copy_id provided"
+    }
+
+    const record = await Copies.findOne({
+        where:{
+            [Op.and]: [
+                {copy_id: filter.copy_id},
+                {book_id: filter.book_id}
+            ]
+        }
+    })
+    if (!record) return {
+        success: false,
+        message: "no record found"
+    }
+    if (record.toJSON().borrower === null) return {
+        success: false,
+        message: "book is not borrowed"
+    }
+
+    await record.update({
+        status: "available",
+        borrower: null
+    })
+    return {
+        success: true, message: ""
+    }
+}
+
+async function create_book_copy(filter: AlterCopyRequest): Promise<OpStatus> {
     const auth = filter.auth;
     // make sure username is staff
     const user_verify = await verify_login(auth.username, auth.password)
@@ -346,7 +385,8 @@ async function create_book_copy(filter: AlterCopyRequest): Promise<BorrowStatus>
 }
 
 export{
-    find_matching_books, send_tables, count_matching_books, get_book_info, checkout_book, BorrowStatus,
-    get_borrows, return_book,
+    find_matching_books, send_tables, count_matching_books, 
+    get_book_info, checkout_book, OpStatus as BorrowStatus, get_borrows, 
+    return_book, force_return_book,
     create_book_copy,
 }

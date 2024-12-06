@@ -78,6 +78,43 @@ function ManageCopies(props: ManageCopiesProps) {
         fetchCopiesInfo()
     }
 
+    async function forceReturnCopy(input: number) {
+        const username = sessionStorage.getItem("username");
+        const password = sessionStorage.getItem("password");
+        if (username === null || password === null) {
+            throw new Error("invalid username / password")
+        }
+        const query: AlterCopyRequest = {
+            book_id: props.book.book_id,
+            auth: {
+                username: username,
+                password: password
+            },
+            copy_id: input
+        }
+        console.log(query)
+        let response: BorrowStatus | void = await fetch("http://localhost:8080/forceReturnBook",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(query)
+            }
+        ).then(res => {
+            if (res.ok) {
+                return res.json();
+            }
+        });
+        if (response !== undefined) {
+            if (!response.success) {
+                alert(`OPERATION FAILURE: ${response.message}`)
+            }
+        }
+        fetchCopiesInfo()
+    }
+    
+
     useEffect(() => {
         fetchCopiesInfo()
         console.log("ManageCopies useEffect")
@@ -119,7 +156,7 @@ function ManageCopies(props: ManageCopiesProps) {
                     </thead>
                     <tbody>
                         {copiesInfo?.map((item) => 
-                            <tr>
+                            <tr key={item.copy_id} >
                                 <td className='FillCell'></td>
                                 <td className='FirstCell'>{item.copy_id}</td>
                                 <TdDivider />
@@ -128,8 +165,8 @@ function ManageCopies(props: ManageCopiesProps) {
                                 <td>{(!item.borrower) ? "N/A" : item.borrower}</td>
                                 <TdDivider />
                                 <td className='LastCell'>
-                                    <button className='Common-Button'>Remove</button>
-                                    <button className='Common-Button'>Return</button>
+                                    <button className='Text-Button'>Remove</button>
+                                    <button className='Text-Button' onClick={() => {forceReturnCopy(item.copy_id)}}>Return</button>
                                 </td>
                                 <td className='FillCell'></td>
                             </tr>
