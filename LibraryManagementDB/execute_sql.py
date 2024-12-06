@@ -8,7 +8,7 @@ conn = mysql.connector.connect(
     database="LibraryManagementDB"
 )
 
-def exe_sql(file_path:str, multiple_queries = True):
+def exe_sql_file(file_path:str, multiple_queries = True):
     # Create a cursor to execute queries
     cursor = conn.cursor()
 
@@ -18,14 +18,15 @@ def exe_sql(file_path:str, multiple_queries = True):
 
     # Split the SQL file content into individual queries
     if multiple_queries:
-        queries = sql_queries.split(';')
-        for query in queries:
-            try:
-                if query.strip() != '':
-                    cursor.execute(query)
-                    conn.commit()
-            except Exception as e:
-                print("Error executing query:", str(e))
+        try:
+            conn.start_transaction(isolation_level="SERIALIZABLE")
+            queries = sql_queries.split(';')
+            for query in queries:
+                    if query.strip() != '':
+                        cursor.execute(query)
+            conn.commit()
+        except Exception as e:
+            print("Error executing query:", str(e))
     else:
         query = sql_queries
         try:

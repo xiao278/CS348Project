@@ -1,4 +1,4 @@
-from execute_sql import exe_sql
+from execute_sql import exe_sql_file
 import os
 
 cur_dir = os.path.dirname(__file__)
@@ -13,4 +13,4 @@ def populate_db():
         filenames = os.listdir(table_dir)
         for filename in filenames:
             print(os.path.join(table_dir, filename))
-            exe_sql(os.path.join(table_dir, filename), False)
+            exe_sql_file(os.path.join(table_dir, filename), False)
