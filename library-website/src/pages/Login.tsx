@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import "./Login.css";
 
-function Login({setPage, setCredentials}) {
+function Login({setPage}) {
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -23,17 +23,35 @@ function Login({setPage, setCredentials}) {
         return response;
     }
 
+    async function login_attempt(username: string, password: string) {
+        let result = await fetchLogin(username, password);
+        if (result.role === "reader" || result.role === "staff") {
+            sessionStorage.setItem("username", username);
+            sessionStorage.setItem("password", password);
+            sessionStorage.setItem("role", result.role)
+            setPage("reader");
+        }
+    }
+
     async function login_click () {
         // console.log(typeof(setPage));
         // setPage('reader');
-        let result = await fetchLogin(username, password);
-        if (result.role === "reader" || result.role === "staff") {
-            setCredentials({username: username, password: password});
-            // console.log(username, password)
-            // TODO create staff page
-            setPage("reader");
-        }
+        login_attempt(username, password);
     };
+
+    useEffect(() => {
+        // attempt to retrieve username and password
+        if (username == "" || password == "") {
+            let temp_usr = sessionStorage.getItem("username");
+            let temp_pwd = sessionStorage.getItem("password");
+            if (!temp_pwd || !temp_usr) {
+                sessionStorage.clear();
+            }
+            else {
+                login_attempt(temp_usr, temp_pwd);
+            }
+        }
+    })
 
     return (
         <div className='Login-Container'>

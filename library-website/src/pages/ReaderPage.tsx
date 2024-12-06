@@ -1,12 +1,30 @@
 import React, {useState} from 'react';
 import "./ReaderPage.css";
 import Browse from './reader-content/BrowseBook.tsx';
+import { BookQuery } from "../../../library-server/request_type";
+import Account from './reader-content/Account.tsx';
+import Borrows from './reader-content/Borrows.tsx';
 
-function ReaderPage({credentials, setPage, tables, setTables}) {
+
+function ReaderPage({setPage, tables, setTables}) {
     const [tab, setTab] = useState('browse');
+    const [ curFilters, setCurFilters ] = useState<BookQuery | null>(null)
+    const [ curPage, setCurPage ] = useState(1)
+    const [ queryStats, setQueryStats ] = useState<any>({num_books: 0, num_pages: 0})
 
     function renderContent() {
-        if (tab === 'browse') return <Browse credentials={credentials} setTables={setTables} tables={tables} />;
+        if (tab === 'browse') return <Browse 
+            setTables={setTables} 
+            tables={tables}
+        />;
+
+        if (tab === 'account') return <Account 
+            setPage={setPage}
+        />;
+
+        if (tab === 'borrow') return <Borrows 
+            setPage={setPage}
+        />
     }
 
     return (

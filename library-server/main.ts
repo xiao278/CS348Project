@@ -1,7 +1,7 @@
-import { LoginPayload, BookQuery } from "./request_type";
+import { LoginPayload, BookQuery, BookInfoRequest, BorrowRequest } from "./request_type";
 import { verify_login } from "./auth";
 import { sequelize } from "./tables";
-import { count_matching_books, find_matching_books, send_tables } from "./query_books";
+import * as db from "./query_books";
 
 // test db connection
 sequelize.authenticate().then(() => {
@@ -39,7 +39,7 @@ app.post("/login", jsonParser, async (req, res) => {
     try {
         let loginFields:LoginPayload = req.body;
         let result = await verify_login(loginFields.username, loginFields.password);
-        console.log("Login Attempt: " + JSON.stringify({username: loginFields.username, password: loginFields.password}) + ", result: " + result);
+        // console.log("Login Attempt: " + JSON.stringify({username: loginFields.username, password: loginFields.password}) + ", result: " + result);
         // let responseBody = JSON.stringify({username: loginFields.username, password: loginFields.password})
         // console.log(loginFields);
         // console.log(responseBody);
@@ -57,7 +57,7 @@ app.post("/login", jsonParser, async (req, res) => {
 });
 
 app.get("/fetchBrowseTables", async (req, res) => {
-    let tables = await send_tables();
+    let tables = await db.send_tables();
     res.status(200).send(JSON.stringify(tables));
     // console.log(JSON.stringify(tables))
 })
@@ -71,7 +71,7 @@ app.post("/findBooks", jsonParser, async (req, res) => {
         const filters = req.body.query;
         const page = req.body.page;
         // console.log(filters);
-        let books = await find_matching_books(filters, page);
+        let books = await db.find_matching_books(filters, page);
         res.status(200).send(books);
     }
     catch (e) {
@@ -89,7 +89,7 @@ app.post("/countBooks", jsonParser, async (req, res) => {
     //TODO add login verification
     try {
         let filters:BookQuery = req.body;
-        let counts = await count_matching_books(filters);
+        let counts = await db.count_matching_books(filters);
         res.status(200).send(counts);
     }
     catch (e) {
@@ -98,3 +98,66 @@ app.post("/countBooks", jsonParser, async (req, res) => {
     }
 })
 
+app.post("/getBookInfo", jsonParser, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+    //TODO add login verification
+    try {
+        let filters:BookInfoRequest = req.body;
+        let result = await db.get_book_info(filters);
+        res.status(200).send(result);
+    }
+    catch (e) {
+        console.log(e)
+        res.status(404).send({message: e.message});
+    }
+})
+
+app.post("/checkoutBook", jsonParser, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+    //TODO add login verification
+    try {
+        let filters:BorrowRequest = req.body;
+        let result = await db.checkout_book(filters);
+        res.status(200).send(result);
+    }
+    catch (e) {
+        console.log(e)
+        res.status(404).send({message: e.message});
+    }
+})
+
+app.post("/returnBook", jsonParser, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+    //TODO add login verification
+    try {
+        let filters:BorrowRequest = req.body;
+        let result = await db.return_book(filters);
+        res.status(200).send(result);
+    }
+    catch (e) {
+        console.log(e)
+        res.status(404).send({message: e.message});
+    }
+})
+
+app.post("/getBorrows", jsonParser, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+    //TODO add login verification
+    try {
+        let filters:LoginPayload = req.body;
+        let result = await db.get_borrows(filters);
+        res.status(200).send(result);
+    }
+    catch (e) {
+        console.log(e)
+        res.status(404).send({message: e.message});
+    }
+})

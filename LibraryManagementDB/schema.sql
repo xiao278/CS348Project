@@ -4,7 +4,6 @@ DROP TABLE IF EXISTS Wishlist;
 DROP TABLE IF EXISTS Reader_Login;
 DROP TABLE IF EXISTS Staff_Login;
 DROP TABLE IF EXISTS Report;
-DROP TABLE IF EXISTS Borrow;
 DROP TABLE IF EXISTS Written_By;
 
 -- weak entities
@@ -71,11 +70,13 @@ CREATE TABLE Staffs (
 );
 
 CREATE TABLE Copies (
-    copy_id INT,
-    location VARCHAR(30),
-    `status` CHAR(9), -- available, lost, borrowed
     book_id INT,
+    copy_id INT,
+    -- location VARCHAR(30),
+    `status` ENUM('available', 'lost', 'borrowed'),
     FOREIGN KEY (book_id) REFERENCES Books(book_id) ON DELETE CASCADE,
+    borrower VARCHAR(32) NULL,
+    FOREIGN KEY (borrower) REFERENCES Logins(username),
     PRIMARY KEY (copy_id, book_id)
 ); 
 
@@ -86,15 +87,6 @@ CREATE TABLE Written_By (
     author_id INT,
     FOREIGN KEY (author_id) REFERENCES Authors(author_id)
     -- PRIMARY KEY (author_id, book_id, role)
-);
-
-CREATE TABLE Borrow (
-    due_date DATE,
-    borrow_date DATE,
-    copy_id INT,
-    book_id INT,
-    FOREIGN KEY (copy_id, book_id) REFERENCES Copies(copy_id, book_id),
-    PRIMARY KEY (copy_id, book_id)
 );
 
 CREATE TABLE Report (

@@ -18,6 +18,15 @@ interface BookQuery {
     exclude_genre_ids: number[]; 
 }
 
-export {LoginPayload, BookQuery};
+interface BookInfoRequest {
+    book_id: number;
+}
+
+interface BorrowRequest {
+    book_id: number;
+    auth: LoginPayload;
+}
+
+export {LoginPayload, BookQuery, BookInfoRequest, BorrowRequest};
 
 

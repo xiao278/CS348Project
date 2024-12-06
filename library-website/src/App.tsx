@@ -7,11 +7,11 @@ import './App.css';
 function App() {
     const [page, setPage] = useState('login'); // State to track the current page
     const [ tables, setTables ] = useState<object | null>(null);
-    const [credentials, setCredentials] = useState<Credentials>({username:"",  password:""});
+    // const [ credentials, setCredentials ] = useState<Credentials>({username:"",  password:""});
 
     const renderPage = () => {
-        if (page === 'login') return <Login setPage={setPage} setCredentials={setCredentials}/>;
-        if (page === 'reader') return <ReaderPage setPage={setPage} credentials={credentials} tables={tables} setTables={setTables}/>;
+        if (page === 'login') return <Login setPage={setPage}/>;
+        if (page === 'reader') return <ReaderPage setPage={setPage} tables={tables} setTables={setTables}/>;
     };
 
     return (

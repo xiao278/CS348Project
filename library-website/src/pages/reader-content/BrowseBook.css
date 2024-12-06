@@ -82,7 +82,7 @@
 
 .Buttons-Container > button {
     flex-grow: 1;
-    border-radius: 0;
+    /* border-radius: 0; */
     border-style: solid;
     border-width: 1px;
     margin: 5px;
@@ -94,7 +94,8 @@
     grid-template-rows: auto, auto;
     /* height: 0;
     min-height: 100%; */
-    overflow: auto;
+    position: relative;
+    overflow: hidden;
 }
 
 .Result-Page-Nav {
@@ -127,4 +128,30 @@
     height: 0;
     min-height: calc(100% - var(--nav_bar_height));
     overflow: scroll;
+}
+
+.Book-Info-Popout {
+    position: absolute;
+    background-color: white;
+    border-style: solid;
+    border-width: 1px;
+    padding: 10px;
+    right: 0px;
+    bottom: 0px;
+    top: var(--nav_bar_height);
+}
+
+.Book-Info-Popout > div {
+    /* background-color: gainsboro; */
+    padding: 10px;
+    border-radius: 3px;
+}
+
+.Info-Table {
+    border-width: 1px;
+    border-collapse: collapse;
+}
+
+.Info-Table th, .Info-Table td {
+    padding: 3px;
 }

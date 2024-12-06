@@ -8,8 +8,11 @@ const sequelize = new Sequelize(
     {
         host: 'localhost',
         dialect: 'mysql',
-        logging: false
-    }
+        logging: false,
+        define: {
+            timestamps: false, // Disables createdAt and updatedAt globally
+        },
+    },
 );
 
 class Logins extends Model {}
@@ -17,11 +20,11 @@ Logins.init(
     {
         // Model attributes are defined here
         username: {
-            type: DataTypes.CHAR(32),
+            type: DataTypes.STRING(32),
             primaryKey: true
         },
         password: {
-            type: DataTypes.CHAR(32),
+            type: DataTypes.STRING(32),
         },
     },
     {
@@ -299,6 +302,41 @@ Book_Genre.init(
     }
 );
 
+
+class Copies extends Model{}
+Copies.init(
+    {
+        book_id: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: Books,
+                key: "book_id"
+            },
+            primaryKey: true
+        },
+        copy_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true
+        },
+        status: {
+            type: DataTypes.ENUM('available', 'lost', 'borrowed')
+        },
+        borrower: {
+            type: DataTypes.STRING(32),
+            allowNull: true,
+            references: {
+                model: Logins,
+                key: "username"
+            }
+        }
+    },
+    {
+        sequelize,
+        modelName: "Copies",
+        tableName: "Copies"
+    }
+)
+
 Books.belongsToMany(Authors, {through: Written_By, foreignKey: "book_id"});
 Authors.belongsToMany(Books, {through: Written_By, foreignKey: "author_id"});
 
@@ -309,11 +347,17 @@ Languages.hasMany(Books, {foreignKey: "lang_id"});
 Books.belongsTo(Languages, {foreignKey: "lang_id"});
 
 Publishers.hasMany(Books, {foreignKey: "publisher_id"});
-Books.belongsTo(Publishers, {foreignKey: "publisher_id"})
+Books.belongsTo(Publishers, {foreignKey: "publisher_id"});
+
+Logins.hasMany(Copies, {foreignKey: "borrower"});
+Copies.belongsTo(Logins, {foreignKey: "borrower"});
+Books.hasMany(Copies, {foreignKey: "book_id"});
+Copies.belongsTo(Books, {foreignKey: "book_id"});
 
 export {sequelize, 
     Logins, Readers, Staffs, Reader_Login, Staff_Login,
     Books, Languages, Publishers,
     Genres, Book_Genre,
-    Authors, Written_By
+    Authors, Written_By,
+    Copies
 }

@@ -1,16 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import "./BrowseBook.css"
 import { Credentials, BrowseTables } from "../../GeneralIntefaces";
-import { BookQuery } from "../../../../library-server/request_type";
+import { BookQuery, BookInfoRequest, BorrowRequest } from "../../../../library-server/request_type";
+import { BorrowStatus } from "../../../../library-server/query_books"
 import Select from 'react-select';
 
 interface BookData extends Object {
     book_id: number;
     title: string;
     Publisher: {name: string};
+    publish_date: string;
     Language: any;
     Authors: {name: string}[];
     Genres: {genre: string}[];
+}
+
+interface BookInfoData {
+    copy_id: number;
+    status: string;
 }
 
 interface Genres {
@@ -20,18 +27,24 @@ interface Genres {
 
 interface BookCardProps {
     data: BookData;
-    setDataCardInfo: any;
+    setShowCard: any;
+    setBook: any;
 }
 
 interface BrowseProps {
-    credentials: Credentials
+    // credentials: Credentials
     tables: BrowseTables | null;
     setTables: any
 }
 
+interface InfoCardProps {
+    book: BookData;
+    showCard: boolean;
+    setShowCard: any;
+}
+
 function BookCard(props: BookCardProps) {
     const data = props.data
-    const setDataCardInfo = props.setDataCardInfo
     
     const extractAuthorNames = (list: BookData['Authors']) => {
         try {
@@ -58,20 +71,134 @@ function BookCard(props: BookCardProps) {
             return "N/A: Error";
         }
     });
-    
+
+    function handleMoreInfo() {
+        props.setBook(props.data);
+        props.setShowCard(true);
+    }
+
+    async function borrowBook() {
+        const username = sessionStorage.getItem("username");
+        const password = sessionStorage.getItem("password");
+        if (username === null || password === null) {
+            throw new Error("invalid username / password")
+        }
+        const query: BorrowRequest = {
+            book_id: data.book_id,
+            auth: {
+                username: username,
+                password: password
+            }
+        }
+        let response: BorrowStatus | void = await fetch("http://localhost:8080/checkoutBook",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(query)
+            }
+        ).then(res => {
+            if (res.ok) {
+                return res.json();
+            }
+        });
+        if (response !== undefined) {
+            if (response.success) {
+                alert("CHECKOUT SUCCESSFUL")
+            }
+            else {
+                alert(`CHECKOUT FAILURE: ${response.message}`)
+            }
+        }
+    }
+
     return (
         <div className='Book-Card-Container'>
             <div className='Info-Container'>
                 <div>Title: {data.title}</div>
                 <div>Author(s): {extractAuthorNames(data.Authors)}</div>
                 <div>Publisher: {data.Publisher === null ? "N/A": data.Publisher.name}</div>
+                <div>Publish Date: {data.publish_date === null ? "N/A": data.publish_date}</div>
                 <div>Language: {data.Language === null ? "N/A" : data.Language.language}</div>
+                {/* <div>Date: {data.}</div> */}
                 <div>Genre(s): {extractGenres(data.Genres)}</div>
             </div>
             <div className='Buttons-Container'>
-                <button className='More-Button'>More</button>
-                <button className='Bookmark-Button'>Bookmark</button>
+                <button className='More-Button Common-Button' onClick={handleMoreInfo}>More Info</button>
+                <button className='Bookmark-Button Common-Button'onClick={borrowBook}>Checkout</button>
             </div>
+        </div>
+    )
+}
+
+function InfoCard(props: InfoCardProps) {
+    const [ bookInfo, setBookInfo ] = useState<BookInfoData[]>();
+
+    const query: BookInfoRequest = {
+        book_id: props.book.book_id,
+    }
+
+    // fetch function
+    async function fetchBookInfo() {
+        let response = await fetch("http://localhost:8080/getBookInfo",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(query)
+            }
+        ).then(res => {
+            if (res.ok) {
+                return res.json();
+            }
+        });
+        setBookInfo(response);
+    }
+
+    useEffect(() => {
+        fetchBookInfo()
+    });
+
+    /* [{"copy_id":1,"status":"borrowed"}] */
+
+    function availTable(data:BookInfoData[]) {
+        return (
+          <table className='Info-Table' border={1}>
+            <thead>
+              <tr>
+                <th>Copy ID</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item) => (
+                <tr key={item.copy_id}>
+                  <td>{item.copy_id}</td>
+                  <td>{item.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+    }
+
+    return (
+        <div className='Book-Info-Popout'>
+            <div>
+                <button className='Common-Button' onClick={()=>{props.setShowCard(false)}}>x</button>
+                <div>viewing more information for <span style={{
+                    backgroundColor: "yellow",
+                    padding: "2px",
+                    borderRadius: "3px"
+                }}>{props.book.title}</span></div>
+            </div>
+            <div>
+                <h1>Availability</h1>
+                {bookInfo !== undefined ? availTable(bookInfo) : "N/A"}
+            </div>
+            
         </div>
     )
 }
@@ -93,6 +220,8 @@ function Browse(props: BrowseProps) {
     const [ curFilters, setCurFilters ] = useState<BookQuery | null>(null)
     const [ curPage, setCurPage ] = useState(1)
     const [ queryStats, setQueryStats ] = useState<any>({num_books: 0, num_pages: 0})
+    const [ showCard, setShowCard ] = useState<boolean>(false)
+    const [ selectedBook, setSelectedBook ] = useState<BookData>()
 
     function extractGenreIds(input_list:Genres[]) {
         let output_list:number[] = [];
@@ -116,8 +245,8 @@ function Browse(props: BrowseProps) {
         }
 
         //fetch pages
-        if (curFilters === null || JSON.stringify(curFilters) != JSON.stringify(query)){
-            console.log("fetching new query stats")
+        if (curFilters === null || JSON.stringify(curFilters) !== JSON.stringify(query)){
+            // console.log("fetching new query stats")
             setCurPage(1)
             setQueryStats({num_books: 0, num_pages: 0})
             let response = await fetch("http://localhost:8080/countBooks",
@@ -139,7 +268,7 @@ function Browse(props: BrowseProps) {
             }
         }
 
-        console.log(findBookReq)
+        // console.log(findBookReq)
         let response = await fetch("http://localhost:8080/findBooks",
             {
                 method: "POST",
@@ -277,7 +406,7 @@ function Browse(props: BrowseProps) {
                     ></Select>
                 </div>
                 <div className='Genre-Container'>
-                    <p>Exclude Genres: </p>
+                    <p>Exclude Genres: (not working)</p>
                     <Select 
                         isMulti
                         options={tables === null ? [] : tables.genres}
@@ -290,6 +419,7 @@ function Browse(props: BrowseProps) {
                 </div>
             </div>
             <div className='Browse-Result-Container'>
+                {showCard && (selectedBook !== undefined) ? <InfoCard book={selectedBook} showCard={showCard} setShowCard={setShowCard} /> : <></>}
                 <div className='Result-Page-Bar'>
                     <div className='Result-Page-Stats'>
                         Book(s) Found: {queryStats.num_books}. Displaying results {calc_books_displayed()}
@@ -307,7 +437,7 @@ function Browse(props: BrowseProps) {
                 </div>
                 <div className='Result-Page-Container'>
                     {books.map((item) => (
-                        <BookCard key={item.book_id} data={item} setDataCardInfo={null} />
+                        <BookCard key={item.book_id} data={item} setBook={setSelectedBook} setShowCard={setShowCard}/>
                     ))}
                 </div>
             </div>
@@ -315,4 +445,5 @@ function Browse(props: BrowseProps) {
     );
 }
 
+export {BookData};
 export default Browse;

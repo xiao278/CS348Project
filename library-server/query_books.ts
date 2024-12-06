@@ -1,13 +1,20 @@
 import { col, fn, Includeable, Op, Options, WhereOptions } from "sequelize";
-import { Books, Book_Genre, Written_By, Authors, Genres, Languages, Publishers } from "./tables";
-import { BookQuery } from "./request_type";
+import { Books, Book_Genre, Written_By, Authors, Genres, Languages, Publishers, Copies } from "./tables";
+import { BookQuery, BookInfoRequest, BorrowRequest, LoginPayload } from "./request_type";
+import { verify_login } from "./auth";
 
 const page_items = 15;
 const max_pages = 100;
+const max_borrows = 10;
 
 interface QueryStats {
     num_books: number;
     num_pages: number;
+}
+
+interface BorrowStatus {
+    success: boolean;
+    message: string;
 }
 
 function build_query_base(filters:BookQuery, isCounting:boolean) {
@@ -66,7 +73,7 @@ function build_query_base(filters:BookQuery, isCounting:boolean) {
                 required: does_match_author,
                 attributes: isCounting ? [] : ['name'],
                 through: {
-                    attributes:[]
+                    attributes: isCounting ? [] : ['role']
                 },
                 where: author_match
             },
@@ -93,7 +100,7 @@ function build_query_base(filters:BookQuery, isCounting:boolean) {
             },
         ],
         where: title_match,
-        attributes: isCounting ? [] : ['book_id', 'title'],
+        attributes: isCounting ? [] : ['book_id', 'title', 'publish_date'],
     }
     return partial_query
 }
@@ -170,4 +177,121 @@ async function send_tables() {
     return {languages: langs, genres: genres}
 }
 
-export{ find_matching_books, send_tables, count_matching_books }
+async function get_book_info(filters:BookInfoRequest) {
+    let result = await Copies.findAll({
+        attributes: ['copy_id', 'status'],
+        where: {
+            book_id: filters.book_id
+        }
+    }).then((res) => res.map((tuple) => tuple.toJSON()));
+    return result;
+}
+
+async function checkout_book(filters:BorrowRequest):Promise<BorrowStatus> {
+    const auth = filters.auth;
+    // make sure username and password are correct
+    const user_verify = await verify_login(auth.username, auth.password)
+    if (user_verify === null) {
+        return {success: false, message: "invalid login"}
+    }
+
+    // check if there are still books available
+    const record = await Copies.findOne({
+        where: {
+            book_id: filters.book_id,
+            status: "available"
+        }
+    })
+    if (!record) {
+        return {success: false, message: "no available copies"}
+    }
+
+    // make sure user has not borrowed the book already
+    const duplicate_borrows = await Copies.count({
+        where: {
+            [Op.and]: [
+                {book_id: filters.book_id},
+                {borrower: auth.username}
+            ]
+        }
+    })
+    if (duplicate_borrows > 0) {
+        return {success: false, message: `user has already borrowed this book`}
+    }
+
+    // make sure user is not over the borrow limit
+    const user_borrows = await Copies.count({
+        where: {
+            borrower: auth.username
+        }
+    })
+    if (user_borrows >= max_borrows) {
+        return {success: false, message: "user is at borrow limit"}
+    }
+
+    // borrow success
+    const update_status = await record.update({borrower: auth.username, status: "borrowed"})
+    return {success: true, message: ""}
+}
+
+async function get_borrows(filters:LoginPayload) {
+    const copies = await Copies.findAll({
+        attributes: ['copy_id'],
+        where: {
+            borrower: filters.username
+        },
+        include: [
+            {
+                model: Books,
+                attributes: ['book_id', 'title'],
+                include: [
+                    {
+                        model: Authors,
+                        attributes: ['name'],
+                        through: {
+                            attributes:[]
+                        },
+                    },
+                ]
+            }
+        ]
+    }).then((query) => query.map((tuple) => tuple.toJSON()));
+    return {
+        borrows: copies,
+        limit: max_borrows
+    }
+}
+
+async function return_book(filter: BorrowRequest): Promise<BorrowStatus> {
+    const auth = filter.auth;
+    // make sure username and password are correct
+    const user_verify = await verify_login(auth.username, auth.password)
+    if (user_verify === null) {
+        return {success: false, message: "invalid login"}
+    }
+
+    // check if return is valid
+    const record = await Copies.findOne({
+        where:{
+            [Op.and]: [
+                {borrower: auth.username},
+                {book_id: filter.book_id}
+            ]
+        }
+    })
+    if (!record) return {
+        success: false,
+        message: "book not found"
+    }
+
+    await record.update({borrower: null, status: "available"})
+    return {
+        success: true,
+        message: ""
+    }
+}
+
+export{
+    find_matching_books, send_tables, count_matching_books, get_book_info, checkout_book, BorrowStatus,
+    get_borrows, return_book
+}
