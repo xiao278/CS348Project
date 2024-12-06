@@ -4,6 +4,7 @@ import { Credentials, BrowseTables } from "../../GeneralIntefaces";
 import { BookQuery, BookInfoRequest, BorrowRequest } from "../../../../library-server/request_type";
 import { BorrowStatus } from "../../../../library-server/query_books"
 import Select from 'react-select';
+import ManageCopies from './sub-pages/ManageCopies.tsx';
 
 interface BookData extends Object {
     book_id: number;
@@ -18,6 +19,7 @@ interface BookData extends Object {
 interface BookInfoData {
     copy_id: number;
     status: string;
+    borrower?: string;
 }
 
 interface Genres {
@@ -134,6 +136,7 @@ function BookCard(props: BookCardProps) {
 
 function InfoCard(props: InfoCardProps) {
     const [ bookInfo, setBookInfo ] = useState<BookInfoData[]>();
+    const [ showEditor, setShowEditor ] = useState(false);
 
     const query: BookInfoRequest = {
         book_id: props.book.book_id,
@@ -159,7 +162,7 @@ function InfoCard(props: InfoCardProps) {
 
     useEffect(() => {
         fetchBookInfo()
-    });
+    },[]);
 
     /* [{"copy_id":1,"status":"borrowed"}] */
 
@@ -195,7 +198,11 @@ function InfoCard(props: InfoCardProps) {
                 }}>{props.book.title}</span></div>
             </div>
             <div>
-                <h1>Availability</h1>
+                <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'flex-start', gap: '10px'}}>
+                    <h1>Availability</h1>
+                    {sessionStorage.getItem("role") === "staff" ? <button className='No-Button' onClick={() => {setShowEditor(true)}}>Manage</button> : <></>}
+                    {showEditor ? <ManageCopies setShowEditor={setShowEditor} book={props.book}/> : <></>}
+                </div>
                 {bookInfo !== undefined ? availTable(bookInfo) : "N/A"}
             </div>
             
@@ -316,7 +323,7 @@ function Browse(props: BrowseProps) {
             }
         }
         mog();
-    });
+    },[]);
 
     function calc_books_displayed() {
         let lowerBound = Math.min((curPage - 1) * page_items + 1, queryStats.num_books)
@@ -445,5 +452,5 @@ function Browse(props: BrowseProps) {
     );
 }
 
-export {BookData};
+export {BookData, BookInfoData};
 export default Browse;

@@ -1,11 +1,12 @@
 import { col, fn, Includeable, Op, Options, WhereOptions } from "sequelize";
-import { Books, Book_Genre, Written_By, Authors, Genres, Languages, Publishers, Copies } from "./tables";
-import { BookQuery, BookInfoRequest, BorrowRequest, LoginPayload } from "./request_type";
+import { Books, Book_Genre, Written_By, Authors, Genres, Languages, Publishers, Copies, sequelize } from "./tables";
+import { BookQuery, BookInfoRequest, BorrowRequest, LoginPayload, AlterCopyRequest } from "./request_type";
 import { verify_login } from "./auth";
 
 const page_items = 15;
 const max_pages = 100;
 const max_borrows = 10;
+const max_copy_id = 128
 
 interface QueryStats {
     num_books: number;
@@ -177,9 +178,10 @@ async function send_tables() {
     return {languages: langs, genres: genres}
 }
 
-async function get_book_info(filters:BookInfoRequest) {
+async function get_book_info(filters:BookInfoRequest, showBorrower:boolean=false) {
+    const baseAttributes = ['copy_id', 'status']
     let result = await Copies.findAll({
-        attributes: ['copy_id', 'status'],
+        attributes: (showBorrower ? baseAttributes : [...baseAttributes, 'borrower']),
         where: {
             book_id: filters.book_id
         }
@@ -291,7 +293,60 @@ async function return_book(filter: BorrowRequest): Promise<BorrowStatus> {
     }
 }
 
+async function create_book_copy(filter: AlterCopyRequest): Promise<BorrowStatus> {
+    const auth = filter.auth;
+    // make sure username is staff
+    const user_verify = await verify_login(auth.username, auth.password)
+    if (user_verify !== 'staff') {
+        return {success: false, message: "invalid login"}
+    }
+
+    // auto set id 
+    if (!filter.copy_id) {
+        const [smallest_unused_id]:Object[] = await sequelize.query(`
+            SELECT MIN(t1.copy_id + 1) AS smallest_new_id
+            FROM (
+                SELECT * FROM Copies c WHERE c.book_id = ${filter.book_id}
+            ) t1
+            LEFT JOIN (
+                SELECT * FROM Copies c WHERE c.book_id = ${filter.book_id}
+            ) t2 ON t1.copy_id + 1 = t2.copy_id
+            WHERE t2.copy_id IS NULL
+        `);
+        if (typeof smallest_unused_id === 'number' && smallest_unused_id > 128) return {success: false, message: "max copy limit reached"}
+        await Copies.create({
+            book_id: filter.book_id,
+            copy_id: smallest_unused_id[0].smallest_new_id,
+            status: "available"
+        })
+        return {success: true, message: ""}
+    }
+
+    // manual set id, but check first if its available
+    if (filter.copy_id < 1 || filter.copy_id > 128) return {success: false, message: "copy_id out of range"}
+
+    const record = await Copies.findOne({
+        attributes: [],
+        where: {
+            [Op.and]: [
+                {book_id: filter.book_id},
+                {copy_id: filter.copy_id}
+            ]
+        }
+    })
+    if (record) {
+        return {success: false, message: "copy_id already exists"}
+    }
+    await Copies.create({
+        book_id: filter.book_id,
+        copy_id: filter.book_id,
+        status: "available"
+    })
+    return {success: true, message: ""}
+}
+
 export{
     find_matching_books, send_tables, count_matching_books, get_book_info, checkout_book, BorrowStatus,
-    get_borrows, return_book
+    get_borrows, return_book,
+    create_book_copy,
 }

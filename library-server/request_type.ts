@@ -20,6 +20,7 @@ interface BookQuery {
 
 interface BookInfoRequest {
     book_id: number;
+    auth?: LoginPayload;
 }
 
 interface BorrowRequest {
@@ -27,6 +28,12 @@ interface BorrowRequest {
     auth: LoginPayload;
 }
 
-export {LoginPayload, BookQuery, BookInfoRequest, BorrowRequest};
+interface AlterCopyRequest {
+    book_id: number;
+    copy_id?: number;
+    auth: LoginPayload;
+}
+
+export {LoginPayload, BookQuery, BookInfoRequest, BorrowRequest, AlterCopyRequest};
 
 

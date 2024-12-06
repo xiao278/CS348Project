@@ -1,0 +1,63 @@
+.ManageCopiesTable th, .ManageCopiesTable td {
+    text-align: center;
+    border: 0;
+}
+
+.ManageCopiesTable th {
+    padding: 6px;
+}
+
+.ManageCopiesTable td {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.FirstCell {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+.FillCell {
+    background-color: rgba(0,0,0,0) !important;
+}
+
+.LastCell {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.TableDivider {
+    padding: 0 !important;
+    margin: 0; 
+    border: none; 
+    outline: none; 
+    box-shadow: none; 
+}
+
+.TableDivider > div {
+    background-color: rgba(255,255,255,0.4);
+    width: 3px !important;
+    height: 20px;
+    border-radius: 5px;
+}
+
+.ManageCopiesTable thead {
+    position: sticky;
+    width: 100%;
+    top: 0;
+    backdrop-filter: blur(10px);
+}
+
+.ManageCopiesTable tbody td {
+    margin-left: 10px;
+    background-color: rgba(255,255,255,0.2);
+}
+
+.ManageCopiesTable {
+    background-color: #25283D;
+    color: white;
+    border-radius: 15px;
+    user-select: none;
+    max-height: 60vh;
+    overflow: scroll;
+}

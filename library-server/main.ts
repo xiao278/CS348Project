@@ -1,4 +1,4 @@
-import { LoginPayload, BookQuery, BookInfoRequest, BorrowRequest } from "./request_type";
+import { LoginPayload, BookQuery, BookInfoRequest, BorrowRequest, AlterCopyRequest } from "./request_type";
 import { verify_login } from "./auth";
 import { sequelize } from "./tables";
 import * as db from "./query_books";
@@ -105,7 +105,11 @@ app.post("/getBookInfo", jsonParser, async (req, res) => {
     //TODO add login verification
     try {
         let filters:BookInfoRequest = req.body;
-        let result = await db.get_book_info(filters);
+        let role = undefined;
+        if (filters.auth) {
+            role = verify_login(filters.auth.username, filters.auth.password)
+        }
+        let result = await db.get_book_info(filters, role === "staff");
         res.status(200).send(result);
     }
     catch (e) {
@@ -154,6 +158,22 @@ app.post("/getBorrows", jsonParser, async (req, res) => {
     try {
         let filters:LoginPayload = req.body;
         let result = await db.get_borrows(filters);
+        res.status(200).send(result);
+    }
+    catch (e) {
+        console.log(e)
+        res.status(404).send({message: e.message});
+    }
+})
+
+app.post("/createBookCopy", jsonParser, async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+
+    //TODO add login verification
+    try {
+        let filters:AlterCopyRequest = req.body;
+        let result = await db.create_book_copy(filters);
         res.status(200).send(result);
     }
     catch (e) {
