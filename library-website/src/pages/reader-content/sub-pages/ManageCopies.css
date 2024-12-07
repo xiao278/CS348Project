@@ -63,5 +63,15 @@
     border-radius: 15px;
     user-select: none;
     max-height: 60vh;
-    overflow: scroll;
+    overflow-y: scroll;
+    /* margin: 0; */
+}
+
+.ManageCopiesTable::-webkit-scrollbar {
+    background-color: rgba(0,0,0,0);
+}
+
+.ManageCopiesTable::-webkit-scrollbar-thumb {
+    background-color: rgba(129, 129, 129, 0.3);
+    border-radius: 10px;
 }

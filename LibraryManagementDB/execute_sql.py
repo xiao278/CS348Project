@@ -1,14 +1,16 @@
 import mysql.connector
 
 # Establish a connection to the MySQL server
-conn = mysql.connector.connect(
-    host="localhost",
-    user="lib_backend",
-    password="12345678@",
-    database="LibraryManagementDB"
-)
+config = {
+    'host':"localhost",
+    'user':"lib_backend",
+    'password':"12345678@",
+    'database':"LibraryManagementDB"
+}
 
 def exe_sql_file(file_path:str, multiple_queries = True):
+    conn = mysql.connector.connect(**config)
+
     # Create a cursor to execute queries
     cursor = conn.cursor()
 
@@ -31,7 +33,7 @@ def exe_sql_file(file_path:str, multiple_queries = True):
         query = sql_queries
         try:
             if query.strip() != '':
-                cursor.execute(query)
+                cursor.execute(query, multi=True)
                 conn.commit()
         except Exception as e:
             print("Error executing query:", str(e))
@@ -42,4 +44,4 @@ def exe_sql_file(file_path:str, multiple_queries = True):
 
     # Close the cursor and the database connection
     cursor.close()
-    # conn.close()
+    conn.close()

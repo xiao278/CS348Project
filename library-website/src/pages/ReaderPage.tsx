@@ -32,8 +32,7 @@ function ReaderPage({setPage, tables, setTables}) {
                 <div className='Navbar'>
                     <button onClick={() => setTab('browse')} className={(tab === 'browse') ? "Nav-Selected" : "Nav-Unselected"}>Browse books</button>
                     <button onClick={() => setTab('borrow')} className={(tab === 'borrow') ? "Nav-Selected" : "Nav-Unselected"}>Borrowed books</button>
-                    <button onClick={() => setTab('wishlist')} className={(tab === 'wishlist') ? "Nav-Selected" : "Nav-Unselected"}>Wishlist</button>
-                    <button onClick={() => setTab('issues')} className={(tab === 'issues') ? "Nav-Selected" : "Nav-Unselected"}>Issues</button>
+                    <button onClick={() => setTab('add')} className={(tab === 'add') ? "Nav-Selected" : "Nav-Unselected"}>Add books</button>
                     <button onClick={() => setTab('account')} className={(tab === 'account') ? "Nav-Selected" : "Nav-Unselected"}>Account</button>
                 </div>
                 {renderContent()}

@@ -43,7 +43,8 @@ CREATE TABLE Books (
 
 CREATE TABLE Genres (
     genre_id INT AUTO_INCREMENT PRIMARY KEY,
-    genre VARCHAR(30)
+    genre VARCHAR(30),
+    book_count INT
 );
 
 CREATE TABLE Authors (
