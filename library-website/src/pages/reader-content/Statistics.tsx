@@ -21,7 +21,7 @@ interface LibStatsData {
 function DynamicTable({data}) {
     return (
         <div>
-            <table border={1}>
+            <table border={1} style={{borderCollapse: "collapse"}}>
                 <thead>
                     <tr>
                         {Object.entries(data[0]).map((item) => 
@@ -74,15 +74,15 @@ function Statistics(props: StatisticsProps) {
     function GraphGenreBooks() {
         console.log(libStats?.genre_books)
         return (
-            <div style={{width: "500px", height: "700px"}}>
+            <div style={{width: "100%", height: "700px"}}>
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={libStats?.genre_books} layout='vertical'>
+                    <BarChart data={libStats?.genre_books} layout='vertical' margin={{left: 50, right: 50}}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <YAxis dataKey="genre" type="category"/>
-                        <XAxis type="number"/>
-                        <Tooltip />
+                        <YAxis dataKey="genre" type="category" tick={{fill: "white"}}/>
+                        <XAxis type="number" tick={{fill: "white"}}/>
+                        <Tooltip contentStyle={{color: "#25283D"}} />
                         <Legend />
-                        <Bar dataKey="book_count" height={1000} fill="#8884d8"/>
+                        <Bar dataKey="book_count" fill="#8884d8"/>
                     </BarChart>
                 </ResponsiveContainer>
             </div>

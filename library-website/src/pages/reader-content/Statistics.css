@@ -2,5 +2,30 @@
     overflow-y: scroll;
     display: flex;
     flex-direction: column;
+    background-color: #25283D;
     gap: 20px;
+    align-items: stretch;
+    padding: 20px;
+}
+
+.StatPageContainer > div {
+    background-color: rgba(0,0,0,0.2);
+    padding: 20px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.StatPageContainer > div > h1 {
+    text-align: center;
+    color: white;
+}
+
+.StatPageContainer > div > div {
+    color: white;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-grow: 1;
+    flex-shrink: 1;
 }
