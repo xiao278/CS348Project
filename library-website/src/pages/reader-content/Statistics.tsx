@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import * as d3 from "d3";
+import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface StatisticsProps {
 
