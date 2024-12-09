@@ -4,6 +4,7 @@ import Browse from './reader-content/BrowseBook.tsx';
 import { BookQuery } from "../../../library-server/request_type";
 import Account from './reader-content/Account.tsx';
 import Borrows from './reader-content/Borrows.tsx';
+import Statistics from './reader-content/Statistics.tsx';
 
 
 function ReaderPage({setPage, tables, setTables}) {
@@ -25,6 +26,8 @@ function ReaderPage({setPage, tables, setTables}) {
         if (tab === 'borrow') return <Borrows 
             setPage={setPage}
         />
+
+        if (tab === 'stats') return <Statistics />
     }
 
     return (

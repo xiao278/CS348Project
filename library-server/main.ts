@@ -2,6 +2,7 @@ import { LoginPayload, BookQuery, BookInfoRequest, BorrowRequest, AlterCopyReque
 import { verify_login } from "./auth";
 import { sequelize } from "./tables";
 import * as db from "./query_books";
+import * as stats from "./query_stats";
 
 // test db connection
 sequelize.authenticate().then(() => {
@@ -212,4 +213,11 @@ app.post("/forceReturnBook", jsonParser, async (req, res) => {
         console.log(e)
         res.status(404).send({message: e.message});
     }
+})
+
+app.get("/fetchStats", async (req, res) => {
+    const frog = await stats.getAllStats();
+    res.status(200).send(frog)
+    // res.status(200).send(JSON.stringify(tables));
+    // console.log(JSON.stringify(tables))
 })

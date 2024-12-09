@@ -5,7 +5,7 @@ cur_dir = os.path.dirname(__file__)
 strong_table_dir = os.path.join(cur_dir, "strong_entities_tables")
 weak_table_dir = os.path.join(cur_dir, "weak_entities_tables")
 relation_dir = os.path.join(cur_dir, "relations_tables")
-stored_procedures_dir = os.path.join(cur_dir, "stored_procedures")
+# stored_procedures_dir = os.path.join(cur_dir, "stored_procedures")
 
 exe_order = [strong_table_dir, weak_table_dir, relation_dir]
 
