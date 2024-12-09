@@ -197,43 +197,53 @@ async function checkout_book(filters:BorrowRequest):Promise<OpStatus> {
         return {success: false, message: "invalid login"}
     }
 
-    // check if there are still books available
-    const record = await Copies.findOne({
-        where: {
-            book_id: filters.book_id,
-            status: "available"
+    const t = await sequelize.transaction()
+    try {
+        // check if there are still books available
+        const record = await Copies.findOne({
+            where: {
+                book_id: filters.book_id,
+                status: "available"
+            }
+        })
+        if (!record) {
+            t.commit();
+            return {success: false, message: "no available copies"};
         }
-    })
-    if (!record) {
-        return {success: false, message: "no available copies"}
-    }
 
-    // make sure user has not borrowed the book already
-    const duplicate_borrows = await Copies.count({
-        where: {
-            [Op.and]: [
-                {book_id: filters.book_id},
-                {borrower: auth.username}
-            ]
+        // make sure user has not borrowed the book already
+        const duplicate_borrows = await Copies.count({
+            where: {
+                [Op.and]: [
+                    {book_id: filters.book_id},
+                    {borrower: auth.username}
+                ]
+            }
+        })
+        if (duplicate_borrows > 0) {
+            t.commit();
+            return {success: false, message: `user has already borrowed this book`};
         }
-    })
-    if (duplicate_borrows > 0) {
-        return {success: false, message: `user has already borrowed this book`}
-    }
 
-    // make sure user is not over the borrow limit
-    const user_borrows = await Copies.count({
-        where: {
-            borrower: auth.username
+        // make sure user is not over the borrow limit
+        const user_borrows = await Copies.count({
+            where: {
+                borrower: auth.username
+            }
+        })
+        if (user_borrows >= max_borrows) {
+            t.commit();
+            return {success: false, message: "user is at borrow limit"};
         }
-    })
-    if (user_borrows >= max_borrows) {
-        return {success: false, message: "user is at borrow limit"}
-    }
 
-    // borrow success
-    const update_status = await record.update({borrower: auth.username, status: "borrowed"})
-    return {success: true, message: ""}
+        // borrow success
+        const update_status = await record.update({borrower: auth.username, status: "borrowed"});
+        t.commit();
+        return {success: true, message: ""};
+    } catch (e) {
+        t.rollback();
+        throw e;
+    }
 }
 
 async function get_borrows(filters:LoginPayload) {
@@ -273,23 +283,33 @@ async function return_book(filter: BorrowRequest): Promise<OpStatus> {
     }
 
     // check if return is valid
-    const record = await Copies.findOne({
-        where:{
-            [Op.and]: [
-                {borrower: auth.username},
-                {book_id: filter.book_id}
-            ]
+    const t = await sequelize.transaction()
+    try {
+        const record = await Copies.findOne({
+            where:{
+                [Op.and]: [
+                    {borrower: auth.username},
+                    {book_id: filter.book_id}
+                ]
+            }
+        })
+        if (!record) {
+            t.commit()
+            return {
+                success: false,
+                message: "book not found"
+            }
         }
-    })
-    if (!record) return {
-        success: false,
-        message: "book not found"
-    }
-
-    await record.update({borrower: null, status: "available"})
-    return {
-        success: true,
-        message: ""
+    
+        await record.update({borrower: null, status: "available"})
+        t.commit()
+        return {
+            success: true,
+            message: ""
+        }
+    } catch (e) {
+        t.rollback()
+        throw e;
     }
 }
 
@@ -306,29 +326,42 @@ async function force_return_book(filter: AlterCopyRequest): Promise<OpStatus> {
         message: "no copy_id provided"
     }
 
-    const record = await Copies.findOne({
-        where:{
-            [Op.and]: [
-                {copy_id: filter.copy_id},
-                {book_id: filter.book_id}
-            ]
+    const t = await sequelize.transaction()
+    try {
+        const record = await Copies.findOne({
+            where:{
+                [Op.and]: [
+                    {copy_id: filter.copy_id},
+                    {book_id: filter.book_id}
+                ]
+            }
+        })
+        if (!record) {
+            t.commit()
+            return {
+                success: false,
+                message: "no record found"
+            }
         }
-    })
-    if (!record) return {
-        success: false,
-        message: "no record found"
-    }
-    if (record.toJSON().borrower === null) return {
-        success: false,
-        message: "book is not borrowed"
-    }
-
-    await record.update({
-        status: "available",
-        borrower: null
-    })
-    return {
-        success: true, message: ""
+        if (record.toJSON().borrower === null) {
+            t.commit()
+            return {
+                success: false,
+                message: "book is not borrowed"
+            }
+        }
+    
+        await record.update({
+            status: "available",
+            borrower: null
+        })
+        t.commit()
+        return {
+            success: true, message: ""
+        }
+    } catch (e) {
+        t.rollback()
+        throw e
     }
 }
 
