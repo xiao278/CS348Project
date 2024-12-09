@@ -71,3 +71,13 @@ html, body {
   cursor: pointer;
   color: blue;
 }
+
+div::-webkit-scrollbar {
+  display: none;
+}
+
+div::-webkit-scrollbar-thumb {
+  position: absolute;
+  background-color: rgba(129, 129, 129, 0.3);
+  border-radius: 10px;
+}

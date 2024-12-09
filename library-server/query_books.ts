@@ -417,7 +417,7 @@ async function delete_book_copy(filter: AlterCopyRequest): Promise<OpStatus> {
 
     const t = await sequelize.transaction()
     try {
-        const deleted = Copies.destroy({
+        const deleted = await Copies.destroy({
             where: {
                 [Op.and]: [
                     {book_id: filter.book_id},
